@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول -  VNXR TEAM </title>
+
+  <!-- استيراد خط -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: "Cairo", sans-serif;
+      background: #000; /* خلفية سوداء */
+      overflow: hidden;
+      color: white;
+    }
+
+    /* فقاعات متحركة */
+    .bubbles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0; left: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bubble {
+      position: absolute;
+      bottom: -150px;
+      border-radius: 50%;
+      animation: rise 15s infinite ease-in;
+      background: rgba(173, 216, 230, 0.35); /* لون الفقاعات */
+    }
+
+    @keyframes rise {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-110vh) scale(1.3); opacity: 0; }
+    }
+
+    .login-box {
+      width: 340px;
+      padding: 35px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 0 30px rgba(0, 200, 255, 0.6);
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      color: #00eaff;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    p {
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #e6ffe6;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      outline: none;
+      font-family: "Cairo", sans-serif;
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 18px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #0077ff, #00ffcc);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 17px;
+      font-family: "Cairo", sans-serif;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.07);
+      opacity: 0.9;
+    }
+
+    .error {
+      margin-top: 14px;
+      color: #ff4d4d;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>🔐 تسجيل الدخول إلى VNXR </h2>
+    <p>أدخل اسم المستخدم وكلمة المرور</p>
+    <input type="text" id="username" placeholder="اسم المستخدم">
+    <input type="password" id="password" placeholder="كلمة المرور">
+    <button onclick="login()">تسجيل الدخول</button>
+    <p class="error" id="error-msg"></p>
+  </div>
+
+  <!-- فقاعات -->
+  <div class="bubbles"></div>
+
+  <script>
+    // توليد فقاعات عشوائية
+    const bubblesContainer = document.querySelector('.bubbles');
+    for (let i = 0; i < 20; i++) {
+      const bubble = document.createElement('div');
+      const size = Math.random() * 50 + 25;
+      bubble.classList.add('bubble');
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      bubble.style.left = Math.random() * 100 + '%';
+      bubble.style.animationDuration = (8 + Math.random() * 12) + 's';
+      bubblesContainer.appendChild(bubble);
+    }
+
+    // وظيفة تسجيل الدخول
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      const errorMsg = document.getElementById("error-msg");
+
+      if (user === "VNXR" && pass === "AKIRA") {
+        window.location.href = "main.html";
+      } else {
+        errorMsg.textContent = "❌ اسم المستخدم أو كلمة المرور غير صحيحة!";
+      }
+    }
+  </script>
+</body>
+</html>
