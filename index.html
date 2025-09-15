@@ -1,251 +1,691 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>M31 TEAM LVL FF - السيطرة المطلقة</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-<style>
-body {
-    margin:0;
-    font-family:'Orbitron', sans-serif;
-    background: linear-gradient(270deg, #0a0f2a, #00152d, #0a0f2a);
-    background-size: 600% 600%;
-    animation: gradientBG 20s ease infinite;
-    color:#fff;
-    display:flex;
-    justify-content:center;
-    padding:20px;
-}
-
-@keyframes gradientBG {
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
-}
-
-.container{
-    width:100%;
-    max-width:1100px;
-}
-
-h1{
-    font-size:64px;
-    text-align:center;
-    text-shadow: 0 0 20px #00f0ff, 0 0 40px #00f0ff;
-    margin-bottom:50px;
-}
-
-/* Neon Animated Card */
-@keyframes neonBorder {
-    0%{box-shadow: 0 0 15px #00f0ff, 0 0 30px #00f0ff inset;}
-    25%{box-shadow: 0 0 20px #00ffea, 0 0 40px #00ffea inset;}
-    50%{box-shadow: 0 0 25px #ff00ff, 0 0 50px #ff00ff inset;}
-    75%{box-shadow: 0 0 20px #ffea00, 0 0 40px #ffea00 inset;}
-    100%{box-shadow: 0 0 15px #00f0ff, 0 0 30px #00f0ff inset;}
-}
-
-.neon-card{
-    background: rgba(10,15,50,0.85);
-    border-radius:25px;
-    padding:25px;
-    margin:20px 0;
-    border: 2px solid #00f0ff;
-    animation: neonBorder 4s linear infinite;
-    transition: all 0.3s ease;
-}
-.neon-card:hover{
-    transform: scale(1.02);
-}
-
-/* عداد المتصلين */
-#onlineCount{
-    font-size:36px;
-    font-weight:bold;
-    color:#00ffea;
-    text-align:center;
-    text-shadow: 0 0 20px #00ffea, 0 0 40px #00ffea;
-}
-
-/* المميزات */
-.feature-list{
-    list-style:none;
-    padding:0;
-}
-.feature-list li{
-    margin:10px 0;
-    font-size:18px;
-    padding-left:30px;
-    position:relative;
-}
-.feature-list li::before{
-    content:"⭐";
-    position:absolute;
-    left:0;
-}
-
-/* الإدخالات */
-input, button{
-    border:none;
-    border-radius:12px;
-    font-size:16px;
-    padding:14px;
-    margin:10px 0;
-    width:100%;
-}
-
-input{
-    background: rgba(0,21,45,0.8);
-    color:#fff;
-}
-
-button{
-    cursor:pointer;
-    transition:0.3s;
-}
-
-.btn-primary{
-    background:#00f0ff;
-    color:#00152d;
-    font-weight:bold;
-    box-shadow:0 0 8px #00f0ff;
-    padding:15px 30px;
-    margin:5px 0;
-}
-.btn-primary:hover{
-    box-shadow:0 0 35px #00f0ff; 
-    transform:scale(1.05);
-}
-
-.footer{
-    margin-top:30px;
-    font-size:14px;
-    color:#88f;
-    text-align:center;
-}
-
-@media(max-width:768px){
-    h1{font-size:48px;}
-    .neon-card{font-size:16px; padding:20px;}
-    #onlineCount{font-size:28px;}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D5M31</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --dark-bg: #0a0a1a;
+      --darker-bg: #050510;
+      --neon-green: #00ff41;
+      --neon-blue: #0066ff;
+      --neon-purple: #9457eb;
+      --neon-pink: #ff2a6d;
+      --neon-yellow: #ffff00;
+      --text-color: #e0e0e0;
+      --error-color: #ff3333;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body, html {
+      height: 100%;
+      width: 100%;
+      background: var(--dark-bg);
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      color: var(--text-color);
+      overflow: hidden;
+      line-height: 1.6;
+    }
+    
+    /* شاشة البداية */
+    .splash {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      width: 100%;
+      background: var(--darker-bg);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      animation: fadeOut 1.5s ease 2.5s forwards;
+    }
+    
+    .splash-content {
+      text-align: center;
+    }
+    
+    .splash-logo {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--neon-green);
+      text-shadow: 0 0 15px var(--neon-green), 0 0 30px var(--neon-green);
+      animation: pulse 2s infinite;
+    }
+    
+    .splash h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--neon-green);
+      text-shadow: 0 0 10px var(--neon-green);
+      animation: glow 3s infinite alternate;
+    }
+    
+    .splash p {
+      font-size: 1.2rem;
+      color: var(--neon-blue);
+      text-shadow: 0 0 5px var(--neon-blue);
+    }
+    
+    /* الواجهة الرئيسية */
+    .main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1.5rem;
+      height: 100%;
+      overflow-y: auto;
+      opacity: 0;
+      animation: fadeIn 1s ease 3s forwards;
+      position: relative;
+    }
+    
+    /* تأثيرات الخلفية */
+    .bg-effects {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .bg-grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      perspective: 1000px;
+    }
+    
+    .floating-element {
+      position: absolute;
+      background: rgba(0, 102, 255, 0.1);
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+    }
+    
+    .floating-element:nth-child(1) {
+      width: 100px;
+      height: 100px;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+    
+    .floating-element:nth-child(2) {
+      width: 150px;
+      height: 150px;
+      top: 60%;
+      left: 70%;
+      animation-delay: -5s;
+    }
+    
+    .floating-element:nth-child(3) {
+      width: 80px;
+      height: 80px;
+      top: 40%;
+      left: 40%;
+      animation-delay: -10s;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+      width: 100%;
+    }
+    
+    .header h1 {
+      font-size: 1.8rem;
+      color: var(--neon-green);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 5px var(--neon-green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .header::after {
+      content: "";
+      position: absolute;
+      bottom: -10px;
+      left: 20%;
+      width: 60%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-green), transparent);
+    }
+    
+    .input-group {
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+    
+    .url-input {
+      width: 100%;
+      padding: 12px 15px 12px 45px;
+      background: rgba(10, 15, 30, 0.7);
+      border: 1px solid var(--neon-purple);
+      border-radius: 6px;
+      color: var(--text-color);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 5px rgba(148, 87, 235, 0.3);
+    }
+    
+    .url-input:focus {
+      outline: none;
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    }
+    
+    .url-input::placeholder {
+      color: #6b7280;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--neon-purple);
+      font-size: 1.2rem;
+    }
+    
+    .btn {
+      padding: 12px 25px;
+      background: transparent;
+      color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn:hover {
+      background: rgba(0, 255, 65, 0.1);
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .btn:active {
+      transform: translateY(1px);
+    }
+    
+    .btn-spinner {
+      display: none;
+      animation: spin 1s linear infinite;
+    }
+    
+    .status {
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      min-height: 20px;
+      text-align: center;
+      color: var(--neon-blue);
+      width: 100%;
+    }
+    
+    .progress-container {
+      width: 100%;
+      max-width: 400px;
+      height: 8px;
+      background: rgba(10, 15, 30, 0.7);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+      border: 1px solid var(--neon-purple);
+      box-shadow: 0 0 5px rgba(148, 87, 235, 0.3);
+      display: none;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-purple), var(--neon-green));
+      transition: width 0.3s ease;
+    }
+    
+    .download-btn {
+      padding: 12px 25px;
+      background: transparent;
+      color: var(--neon-blue);
+      border: 1px solid var(--neon-blue);
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: none;
+      margin-top: 1rem;
+      text-align: center;
+      box-shadow: 0 0 5px rgba(0, 102, 255, 0.3);
+      width: 100%;
+      max-width: 400px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .download-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 102, 255, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .download-btn:hover::before {
+      left: 100%;
+    }
+    
+    .download-btn:hover {
+      background: rgba(0, 102, 255, 0.1);
+      box-shadow: 0 0 15px rgba(0, 102, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    .links {
+      margin-top: 2rem;
+      text-align: center;
+      width: 100%;
+      border-top: 1px solid rgba(148, 87, 235, 0.3);
+      padding-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    
+    .link-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 15px;
+      background: rgba(10, 15, 30, 0.7);
+      color: var(--neon-blue);
+      text-decoration: none;
+      border-radius: 6px;
+      border: 1px solid var(--neon-purple);
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      box-shadow: 0 0 5px rgba(148, 87, 235, 0.3);
+      position: relative;
+      overflow: hidden;
+      gap: 10px;
+    }
+    
+    .link-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(148, 87, 235, 0.2), transparent);
+      transition: 0.5s;
+    }
+    
+    .link-btn:hover::before {
+      left: 100%;
+    }
+    
+    .link-btn:hover {
+      background: rgba(148, 87, 235, 0.1);
+      box-shadow: 0 0 10px rgba(148, 87, 235, 0.5);
+      transform: translateY(-2px);
+    }
+    
+    /* Animations */
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(10deg);
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+    }
+    
+    @keyframes glow {
+      0%, 100% {
+        text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+      }
+      50% {
+        text-shadow: 0 0 15px var(--neon-green), 0 0 30px var(--neon-green), 0 0 40px var(--neon-green);
+      }
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+      40% {transform: translateY(-10px);}
+      60% {transform: translateY(-5px);}
+    }
+    
+    .bounce {
+      animation: bounce 2s infinite;
+    }
+    
+    .flashing {
+      animation: flashing 1.5s infinite;
+    }
+    
+    @keyframes flashing {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
+  <!-- تأثيرات الخلفية -->
+  <div class="bg-effects">
+    <div class="bg-grid"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+  </div>
 
-<h1>M31 TEAM LVL FF</h1>
+  <!-- شاشة البداية -->
+  <div class="splash">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <i class="fas fa-file-archive"></i>
+      </div>
+      <h1>D5M31</h1>
+      <p>D5M31</p>
+    </div>
+  </div>
 
-<!-- عداد المتصلين -->
-<div class="neon-card">
-<h2>👥 عدد الأشخاص المتصلين الآن</h2>
-<p id="onlineCount">0</p>
-</div>
+  <!-- الواجهة الرئيسية -->
+  <div class="main">
+    <div class="header">
+      <h1><i class="fas fa-folder-plus bounce" style="color: var(--neon-green);"></i> جلب ملفات المواقع</h1>
+    </div>
+    
+    <div class="input-group">
+      <div class="input-icon">
+        <i class="fas fa-link"></i>
+      </div>
+      <input type="text" id="url" class="url-input" placeholder="رابط الموقع">
+    </div>
+    
+    <button class="btn" onclick="fetchFiles()">
+      <i class="fas fa-download"></i>
+      <span>اجلب الملفات</span>
+      <i class="fas fa-spinner btn-spinner" id="spinner"></i>
+    </button>
+    
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <a id="download" class="download-btn">
+      <i class="fas fa-file-archive flashing" style="color: var(--neon-blue);"></i>
+      <span>تحميل ZIP</span>
+    </a>
 
-<!-- مميزات البوت -->
-<div class="neon-card">
-<h2>⭐ مميزات بوت M31 TEAM</h2>
-<ul class="feature-list">
-<li>تقدم فوري ومستمر بدون الحاجة للاتصال بالإنترنت.</li>
-<li>آمنة 100%، لا خطر من الحظر أو تعليق الحساب.</li>
-<li>يحافظ على جميع رتبك ومستواك مهما طالت مدة الاستخدام.</li>
-<li>واجهة واحدة سهلة الاستخدام، كل شيء بضغطة زر.</li>
-<li>إشعارات فورية لكل تقدم في اللعبة.</li>
-<li>تحكم كامل وسريع في البوت: رفع مستويات، ضبط السرعة والمهارة.</li>
-<li>تصميم أنيق ومرتب يركز على كل نقطة مهمة للمشتري.</li>
-</ul>
-</div>
-
-<!-- بيانات المستخدم -->
-<div class="neon-card">
-<h2>✏️ املأ بياناتك</h2>
-<input type="text" id="fullname" placeholder="الاسم الكامل">
-<input type="text" id="platform" placeholder="منصة التواصل (Instagram/Telegram)">
-<input type="text" id="socialUser" placeholder="يوزر التواصل">
-<input type="text" id="botUser" placeholder="اسم المستخدم للبوت">
-<input type="password" id="botPass" placeholder="كلمة المرور للبوت">
-</div>
-
-<!-- الدفع -->
-<div class="neon-card">
-<h2>💰 الدفع عبر Binance</h2>
-<button class="btn-primary" id="buyBtn">اشترِ الآن</button>
-<p style="font-size:14px; color:#88f;">بعد الدفع، قم برفع إثبات الدفع هنا لإرسال طلبك للمطور.</p>
-<input type="file" id="proofFile" accept="image/*">
-<button class="btn-primary" id="sendProofBtn">إرسال إثبات الدفع</button>
-</div>
-
-<!-- تواصل مباشر -->
-<div class="neon-card">
-<h2>📩 تواصل مباشر مع المطور</h2>
-<button class="btn-primary" onclick="window.open('https://t.me/d5mxx','_blank')">Telegram Direct</button>
-<button class="btn-primary" onclick="window.open('https://www.instagram.com/d5mxh','_blank')">Instagram Direct</button>
-</div>
-
-<footer class="footer">© جميع الحقوق محفوظة – M31LVLFF</footer>
-
-</div>
+    <div class="links">
+      <a href="https://www.instagram.com/m_roji_31?igsh=NjExYmE4d2I3dnNs" target="_blank" class="link-btn">
+        <i class="fab fa-instagram" style="color: var(--neon-pink);"></i>
+        <span>Instagram</span>
+      </a>
+      <a href="https://t.me/+8lXAn5G7ECEwMjZk" target="_blank" class="link-btn">
+        <i class="fab fa-telegram" style="color: var(--neon-blue);"></i>
+        <span>مجموعة Telegram</span>
+      </a>
+      <a href="https://t.me/GPLTEAMDEV" target="_blank" class="link-btn">
+        <i class="fab fa-telegram" style="color: var(--neon-green);"></i>
+        <span>قناة Telegram 1</span>
+      </a>
+      <a href="https://t.me/GPL_LONELY" target="_blank" class="link-btn">
+        <i class="fab fa-telegram" style="color: var(--neon-purple);"></i>
+        <span>قناة Telegram 2</span>
+      </a>
+    </div>
+  </div>
 
 <script>
-const BOT_TOKEN="7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8";
-const ADMIN_ID="6251932709";
-const PAYMENT_LINK="https://s.binance.com/MLrHuEhu";
+// القائمة السوداء - المواقع المحظورة
+const BLACKLIST = [
+  "https://roji20112.github.io/ROJI-DOMINE/",
+  "https://alslyby999-sys.github.io/d5mlvlffpro/?fbclid=PAdGRleAM0crVleHRuA2FlbQIxMQABp3CCwo5f_RIz_Am3UoY6O4hUy-yUS9Sl9boW2ka3RD8-XnOelXTZWVVHaPk0_aem_heVUwcV1CxJSLieOjvmvjw",
+  "https://roji20112.github.io/INFOM31/index.html",
+  "https://roji20112.github.io/info/"
+];
 
-// عداد متصلين وهمي متغير
-let onlineCount = Math.floor(Math.random()*200)+50;
-function updateOnlineCount(){
-    let change = Math.floor(Math.random()*6)+2;
-    onlineCount += Math.random()<0.6? change : -change;
-    if(onlineCount<50) onlineCount=50;
-    if(onlineCount>1000) onlineCount=1000;
-    document.getElementById('onlineCount').innerText=onlineCount;
+// دالة للتحقق من القائمة السوداء
+function isBlacklisted(url) {
+  const normalizedUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+  return BLACKLIST.some(blacklistedUrl => {
+    const normalizedBlacklisted = blacklistedUrl.endsWith('/') ? blacklistedUrl.slice(0, -1) : blacklistedUrl;
+    return normalizedUrl === normalizedBlacklisted;
+  });
 }
-setInterval(updateOnlineCount,3000);
 
-// فتح رابط الدفع فقط
-document.getElementById('buyBtn').onclick = ()=>{
-    window.open(PAYMENT_LINK, "_blank");
-    alert("✅ تم توجيهك مباشرة إلى صفحة الدفع على Binance.\nبعد الدفع، يرجى رفع إثبات الدفع هنا.");
-};
-
-// إرسال إثبات الدفع للبوت فقط بعد رفع الصورة
-document.getElementById('sendProofBtn').onclick = ()=>{
-    const fileInput = document.getElementById('proofFile');
-    const fullname=document.getElementById('fullname').value;
-    const platform=document.getElementById('platform').value;
-    const socialUser=document.getElementById('socialUser').value;
-    const botUser=document.getElementById('botUser').value;
-    const botPass=document.getElementById('botPass').value;
-
-    if(!fileInput.files.length){
-        alert("❌ الرجاء رفع صورة إثبات الدفع بعد الانتهاء من الدفع على Binance");
-        return;
+async function fetchFile(link, zip) {
+  // التحقق من القائمة السوداء قبل جلب أي ملف
+  if (isBlacklisted(link)) {
+    throw new Error("هذا الموقع محظور ولا يمكن الوصول إلى ملفاته");
+  }
+  
+  try {
+    let r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(link));
+    if (!r.ok) throw new Error("فشل AllOrigins");
+    let b = await r.blob();
+    zip.file(link.split("/").pop() || "file", b);
+    return true;
+  } catch(e) {
+    try {
+      let r = await fetch(link);
+      if (!r.ok) throw new Error("فشل مباشر");
+      let b = await r.blob();
+      zip.file(link.split("/").pop() || "file", b);
+      return true;
+    } catch(e2) {
+      return false;
     }
-    if(!fullname||!platform||!socialUser||!botUser||!botPass){
-        alert("❌ الرجاء تعبئة كل الحقول قبل الإرسال");
-        return;
+  }
+}
+
+async function fetchFiles(){
+  const url = document.getElementById("url").value.trim();
+  const status = document.getElementById("status");
+  const download = document.getElementById("download");
+  const progressBar = document.getElementById("progressBar");
+  const progressContainer = document.querySelector(".progress-container");
+  const spinner = document.getElementById("spinner");
+  const btn = document.querySelector(".btn");
+
+  if(!url){
+    status.textContent="⚠️ أدخل رابط أولاً";
+    status.style.color = "#ff3333";
+    return;
+  }
+
+  // التحقق من القائمة السوداء قبل أي عملية
+  if (isBlacklisted(url)) {
+    status.textContent="❌ هذا الموقع محظور ولا يمكن الوصول إلى ملفاته";
+    status.style.color = "#ff3333";
+    return;
+  }
+
+  status.textContent="⏳ جاري جلب الموقع...";
+  status.style.color = "#00ff41";
+  download.style.display="none";
+  progressBar.style.width="0%";
+  progressContainer.style.display="block";
+  spinner.style.display = "inline-block";
+  btn.disabled = true;
+
+  try {
+    const api = "https://api.allorigins.win/raw?url=" + encodeURIComponent(url);
+    const res = await fetch(api);
+    if(!res.ok) throw new Error("تعذر جلب الموقع");
+    const html = await res.text();
+
+    // تحليل الصفحة
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    const links = new Set();
+    function add(attr, sel){
+      doc.querySelectorAll(sel).forEach(el=>{
+        const v = el.getAttribute(attr);
+        if(v){ 
+          try {
+            const fullUrl = new URL(v, url).href;
+            // التحقق من القائمة السوداء قبل إضافة الرابط
+            if (!isBlacklisted(fullUrl)) {
+              links.add(fullUrl); 
+            }
+          } catch(e) {
+            console.error("رابط غير صالح:", v);
+          }
+        }
+      });
+    }
+    add("href","link[rel='stylesheet'],a");
+    add("src","script,img,video,audio,source,iframe");
+
+    // إنشاء ZIP
+    const zip = new JSZip();
+    zip.file("index.html", html);
+
+    let done = 0;
+    const total = links.size;
+    
+    for(let link of links){
+      const success = await fetchFile(link, zip);
+      done++;
+      let percent = Math.round((done/total)*100);
+      progressBar.style.width = percent+"%";
+      status.textContent = `📥 تحميل ${done}/${total} (${percent}%)`;
+      
+      // إضافة تأثير التحديث البصري
+      if (done % 5 === 0 || done === total) {
+        progressBar.style.background = `linear-gradient(90deg, var(--neon-purple) ${percent-10}%, var(--neon-green) ${percent}%)`;
+      }
     }
 
-    const caption=`🚨 طلب جديد 🚨
-👤 الاسم: ${fullname}
-🌐 المنصة: ${platform}
-🆔 يوزر التواصل: ${socialUser}
-🔑 يوزر البوت: ${botUser}
-🔒 كلمة المرور: ${botPass}`;
+    const blob = await zip.generateAsync({type:"blob"});
+    const zipUrl = URL.createObjectURL(blob);
+    download.href = zipUrl;
+    download.download = "website_files.zip";
+    download.style.display = "flex";
+    status.textContent = "✅ التحميل اكتمل! جاهز للتحميل";
+    status.style.color = "#00ff41";
+    
+    // تأثير النجاح
+    progressBar.style.background = "var(--neon-green)";
+    progressBar.style.boxShadow = "0 0 10px var(--neon-green)";
+    
+    // إعادة تعيين الزر
+    spinner.style.display = "none";
+    btn.disabled = false;
+  } catch(err){
+    status.textContent="❌ خطأ: "+err.message;
+    status.style.color = "#ff3333";
+    progressContainer.style.display = "none";
+    spinner.style.display = "none";
+    btn.disabled = false;
+  }
+}
 
-    const formData = new FormData();
-    formData.append("chat_id", ADMIN_ID);
-    formData.append("caption", caption);
-    formData.append("photo", fileInput.files[0]);
-
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`,{
-        method:"POST",
-        body: formData
-    })
-    .then(res => res.ok ? alert("✅ سيتم التحقق من معلوماتك وسيتم التواصل معك تلقائيٱ") : alert("❌ فشل الإرسال"))
-    .catch(err => alert("❌ خطأ في الإرسال: "+err));
-};
+// إضافة تفاعلية عند الضغط على Enter في حقل الإدخال
+document.getElementById("url").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    fetchFiles();
+  }
+});
 </script>
 
 </body>
