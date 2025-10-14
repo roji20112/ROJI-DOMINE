@@ -1,239 +1,44 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>كاميرا الويب — صوّر نفسك</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تصوير الكاميرا</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--accent:#0b84ff}
-  body{margin:0;font-family:Tahoma,Arial;direction:rtl;background:var(--bg);padding:20px;display:flex;justify-content:center}
-  .wrap{width:960px;max-width:98vw;background:var(--card);padding:16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.06)}
-  h1{margin:0 0 8px 0;font-size:20px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-  button.secondary{background:#666}
-  #video{width:100%;max-height:540px;border-radius:8px;background:#000;display:block}
-  .row{display:flex;gap:12px;align-items:center}
-  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .thumbs img{width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e6e6e6}
-  .info{color:#666;font-size:13px;margin-top:8px}
-  .flash{position:absolute;left:0;top:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;transition:opacity 220ms}
-  .controls select{padding:8px;border-radius:8px;border:1px solid #ddd}
-  .actions{margin-left:auto}
-  @media (max-width:640px){ .row{flex-direction:column;align-items:stretch} .actions{margin-left:0} }
+  body { text-align:center; font-family:Arial; margin-top:40px; }
+  video, canvas { display:block; margin:0 auto; }
+  button { margin-top:15px; padding:10px 20px; font-size:16px; }
 </style>
 </head>
 <body>
-<div class="wrap" role="application" aria-label="كاميرا ويب">
-  <h1>كاميرا الويب — صوّر المستخدم</h1>
+  <h1>التقط صورة بالكاميرا</h1>
+  <video id="video" width="320" height="240" autoplay></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <button id="capture">📸 التقط وأرسل</button>
 
-  <div class="controls row" style="position:relative">
-    <div style="flex:1">
-      <label for="cameraSelect" style="display:block;margin-bottom:6px;font-size:14px;color:#444">اختر الكاميرا</label>
-      <select id="cameraSelect"></select>
-    </div>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const button = document.getElementById('capture');
 
-    <div class="actions">
-      <button id="startBtn">تشغيل الكاميرا</button>
-      <button id="captureBtn" class="secondary" disabled>التقاط صورة</button>
-      <button id="switchBtn" class="secondary" title="تبديل الكاميرا (إن وُجدت)">تبديل</button>
-      <button id="stopBtn" class="secondary" disabled>إيقاف</button>
-    </div>
-  </div>
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream);
 
-  <div style="position:relative">
-    <video id="video" autoplay playsinline></video>
-    <div class="flash" id="flash"></div>
-  </div>
+    button.onclick = async () => {
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
 
-  <div class="info">
-    <span id="status">الحالة: مغلقة</span>
-    — السماح بالوصول للكاميرا مطلوب. يعمل على أغلب متصفحات الموبايل والكمبيوتر (HTTPS مطلوب في صفحات حية).
-  </div>
-
-  <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-    <a id="downloadLink" style="display:inline-block;text-decoration:none" download="photo.png">
-      <button id="downloadBtn" disabled>تحميل آخر صورة</button>
-    </a>
-    <button id="clearBtn" class="secondary">مسح المعرض</button>
-  </div>
-
-  <div class="thumbs" id="thumbs" aria-live="polite"></div>
-</div>
-
-<script>
-(async function(){
-  const video = document.getElementById('video');
-  const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
-  const captureBtn = document.getElementById('captureBtn');
-  const switchBtn = document.getElementById('switchBtn');
-  const cameraSelect = document.getElementById('cameraSelect');
-  const status = document.getElementById('status');
-  const flash = document.getElementById('flash');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const downloadLink = document.getElementById('downloadLink');
-  const thumbs = document.getElementById('thumbs');
-  const clearBtn = document.getElementById('clearBtn');
-
-  let stream = null;
-  let currentDeviceId = null;
-  let devices = [];
-  let lastImageBlob = null;
-
-  // كائن canvas مؤقت للرسم
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-
-  function logStatus(text){ status.textContent = 'الحالة: ' + text; }
-
-  async function listCameras(){
-    try {
-      const infos = await navigator.mediaDevices.enumerateDevices();
-      devices = infos.filter(d => d.kind === 'videoinput');
-      cameraSelect.innerHTML = '';
-      devices.forEach((d, i) => {
-        const opt = document.createElement('option');
-        opt.value = d.deviceId;
-        opt.text = d.label || `كاميرا ${i+1}`;
-        cameraSelect.appendChild(opt);
+      await fetch('/send_photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl })
       });
-      if(devices.length === 0){
-        cameraSelect.innerHTML = '<option>لا توجد كاميرات</option>';
-      }
-    } catch (e) {
-      cameraSelect.innerHTML = '<option>خطأ في جلب الكاميرات</option>';
-      console.error(e);
-    }
-  }
 
-  async function startCamera(deviceId = null){
-    stopCamera();
-    const constraints = {
-      audio: false,
-      video: {
-        deviceId: deviceId ? { exact: deviceId } : undefined,
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-        facingMode: deviceId ? undefined : { ideal: "user" }
-      }
+      alert("📤 تم إرسال الصورة!");
     };
-    try {
-      stream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = stream;
-      // احصل على deviceId الفعلي المستخدم
-      const track = stream.getVideoTracks()[0];
-      const settings = track.getSettings();
-      currentDeviceId = settings.deviceId || deviceId;
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      captureBtn.disabled = false;
-      logStatus('التصوير جارٍ');
-      await listCameras();
-      // حدد القائمه على الجهاز الجاري
-      if(currentDeviceId){
-        cameraSelect.value = currentDeviceId;
-      }
-    } catch (err) {
-      console.error(err);
-      if (err.name === 'NotAllowedError') {
-        logStatus('لم يُسمح بالوصول للكاميرا — اعطه إذن');
-        alert('يجب السماح بالوصول للكاميرا لكي تعمل هذه الصفحة.');
-      } else {
-        logStatus('خطأ في تشغيل الكاميرا');
-        alert('حدث خطأ عند تشغيل الكاميرا: ' + (err.message || err));
-      }
-    }
-  }
-
-  function stopCamera(){
-    if (stream) {
-      stream.getTracks().forEach(t => t.stop());
-      stream = null;
-      video.srcObject = null;
-    }
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-    captureBtn.disabled = true;
-    logStatus('مقفلة');
-  }
-
-  // التقاط الصورة
-  async function capture(){
-    if(!stream) return;
-    // ضبط حجم الكانفاس وفقا للفيديو الحالي
-    const settings = stream.getVideoTracks()[0].getSettings();
-    const vw = settings.width || video.videoWidth || 1280;
-    const vh = settings.height || video.videoHeight || 720;
-    // نستخدم أبعاد العرض الحالية للعنصر لتقليل حجم الصورة على الأجهزة الصغيرة
-    const displayW = video.clientWidth;
-    const ratio = vw / displayW;
-    canvas.width = Math.floor(displayW);
-    canvas.height = Math.floor((video.clientHeight) || (vh/ratio));
-
-    // رسم الإطار الحالي
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // تأثير فلاش صغير
-    flash.style.opacity = 1;
-    setTimeout(()=>{ flash.style.opacity = 0; }, 120);
-
-    // حزّم الصورة كبِلوك
-    return new Promise(resolve => {
-      canvas.toBlob(blob => {
-        lastImageBlob = blob;
-        const url = URL.createObjectURL(blob);
-        downloadLink.href = url;
-        downloadBtn.disabled = false;
-        downloadLink.download = `photo-${Date.now()}.png`;
-        // عرض مصغرة في المعرض
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = 'صورة ملتقطة';
-        img.loading = 'lazy';
-        img.addEventListener('click', ()=> {
-          // عند النقر نفتح الصورة في نافذة جديدة
-          window.open(url, '_blank');
-        });
-        thumbs.prepend(img);
-        resolve({blob, url});
-      }, 'image/png');
-    });
-  }
-
-  // تبديل الكاميرا إلى التالية في القائمة (إن وُجدت)
-  function switchCamera(){
-    if(devices.length <= 1) return;
-    const ids = devices.map(d => d.deviceId);
-    const idx = ids.indexOf(cameraSelect.value);
-    const next = ids[(idx + 1) % ids.length];
-    cameraSelect.value = next;
-    startCamera(next);
-  }
-
-  // أحداث الواجهة
-  startBtn.addEventListener('click', ()=> startCamera(cameraSelect.value || null));
-  stopBtn.addEventListener('click', stopCamera);
-  captureBtn.addEventListener('click', ()=> capture().catch(console.error));
-  switchBtn.addEventListener('click', switchCamera);
-  cameraSelect.addEventListener('change', ()=> {
-    // إذا كانت الكاميرا تعمل، أعد التشغيل بالجهاز الجديد
-    if(stream) startCamera(cameraSelect.value);
-  });
-  downloadBtn.addEventListener('click', ()=> {
-    if(!lastImageBlob) return;
-    // الرابط جاهز من قبل (downloadLink.href)
-  });
-  clearBtn.addEventListener('click', ()=> {
-    thumbs.innerHTML = '';
-  });
-
-  // دعنا نحاول سرد الكاميرات فوراً (قد لا تظهر تسميات إلا بعد إذن)
-  await listCameras();
-
-  // تجربة: بدء تلقائي إذا سمح المستخدم سابقاً (غير مضمون)
-  // لا نبدأ تلقائياً لكي لا نزعج المستخدم؛ ننتظر ضغطه.
-})();
-</script>
+  </script>
 </body>
 </html>
