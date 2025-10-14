@@ -1,99 +1,239 @@
 <!doctype html>
 <html lang="ar">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>بوت ذكي بسيط</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>كاميرا الويب — صوّر نفسك</title>
 <style>
-  body{font-family:Tahoma,Arial;background:#f7f7f7;padding:20px;direction:rtl}
-  #app{max-width:720px;margin:0 auto;background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
-  .messages{height:400px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:6px;background:#fafafa}
-  .msg{margin:8px 0;padding:8px;border-radius:6px;max-width:80%;}
-  .user{background:#dff4ff;margin-left:auto}
-  .bot{background:#fff;margin-right:auto;border:1px solid #eee}
-  form{display:flex;gap:8px;margin-top:10px}
-  input{flex:1;padding:10px;border-radius:6px;border:1px solid #ccc}
-  button{padding:10px 14px;border-radius:6px;border:0;background:#0b84ff;color:#fff;cursor:pointer}
+  :root{--bg:#f6f7fb;--card:#fff;--accent:#0b84ff}
+  body{margin:0;font-family:Tahoma,Arial;direction:rtl;background:var(--bg);padding:20px;display:flex;justify-content:center}
+  .wrap{width:960px;max-width:98vw;background:var(--card);padding:16px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.06)}
+  h1{margin:0 0 8px 0;font-size:20px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#666}
+  #video{width:100%;max-height:540px;border-radius:8px;background:#000;display:block}
+  .row{display:flex;gap:12px;align-items:center}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .thumbs img{width:120px;height:90px;object-fit:cover;border-radius:6px;border:1px solid #e6e6e6}
+  .info{color:#666;font-size:13px;margin-top:8px}
+  .flash{position:absolute;left:0;top:0;width:100%;height:100%;background:#fff;opacity:0;pointer-events:none;transition:opacity 220ms}
+  .controls select{padding:8px;border-radius:8px;border:1px solid #ddd}
+  .actions{margin-left:auto}
+  @media (max-width:640px){ .row{flex-direction:column;align-items:stretch} .actions{margin-left:0} }
 </style>
 </head>
 <body>
-<div id="app">
-  <h2>بوت ذكي (قواعد + تعلم بسيط)</h2>
-  <div class="messages" id="messages"></div>
+<div class="wrap" role="application" aria-label="كاميرا ويب">
+  <h1>كاميرا الويب — صوّر المستخدم</h1>
 
-  <form id="form">
-    <input id="inp" autocomplete="off" placeholder="اكتب سؤالك..." />
-    <button>أرسل</button>
-  </form>
-  <p style="color:#666;margin-top:8px">هذا بوت محلي بسيط: قواعد + إجابات مُهيأة + ذاكرة مؤقتة.</p>
+  <div class="controls row" style="position:relative">
+    <div style="flex:1">
+      <label for="cameraSelect" style="display:block;margin-bottom:6px;font-size:14px;color:#444">اختر الكاميرا</label>
+      <select id="cameraSelect"></select>
+    </div>
+
+    <div class="actions">
+      <button id="startBtn">تشغيل الكاميرا</button>
+      <button id="captureBtn" class="secondary" disabled>التقاط صورة</button>
+      <button id="switchBtn" class="secondary" title="تبديل الكاميرا (إن وُجدت)">تبديل</button>
+      <button id="stopBtn" class="secondary" disabled>إيقاف</button>
+    </div>
+  </div>
+
+  <div style="position:relative">
+    <video id="video" autoplay playsinline></video>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <div class="info">
+    <span id="status">الحالة: مغلقة</span>
+    — السماح بالوصول للكاميرا مطلوب. يعمل على أغلب متصفحات الموبايل والكمبيوتر (HTTPS مطلوب في صفحات حية).
+  </div>
+
+  <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+    <a id="downloadLink" style="display:inline-block;text-decoration:none" download="photo.png">
+      <button id="downloadBtn" disabled>تحميل آخر صورة</button>
+    </a>
+    <button id="clearBtn" class="secondary">مسح المعرض</button>
+  </div>
+
+  <div class="thumbs" id="thumbs" aria-live="polite"></div>
 </div>
 
 <script>
-const messagesEl = document.getElementById('messages');
-const form = document.getElementById('form');
-const inp = document.getElementById('inp');
+(async function(){
+  const video = document.getElementById('video');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const captureBtn = document.getElementById('captureBtn');
+  const switchBtn = document.getElementById('switchBtn');
+  const cameraSelect = document.getElementById('cameraSelect');
+  const status = document.getElementById('status');
+  const flash = document.getElementById('flash');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadLink = document.getElementById('downloadLink');
+  const thumbs = document.getElementById('thumbs');
+  const clearBtn = document.getElementById('clearBtn');
 
-// قاعدة بسيطة من أزواج (نماذج سؤال -> جواب)
-const rules = [
-  {patterns: [/مرحبا/i, /سلام/i, /أهلا/i], reply: "أهلاً! كيف نقدر نعاونك اليوم؟"},
-  {patterns: [/اسمك/i, /شنو اسمك/i], reply: "أنا بوت ذكي بسيط، تقدر تسميّني بوت."},
-  {patterns: [/كيف حالك/i, /واش راك/i], reply: "بخير الحمد لله! وإنت؟"},
-  {patterns: [/كود/i, /برمجة/i], reply: "نقدر نعاونك بكود بايثون، جافاسكربت، أو نصائح برمجة — قل لي ماذا تريد."},
-  {patterns: [/شكرا/i, /يعطيك الصحة/i], reply: "بالعفو! أي حاجة أخرى؟"}
-];
+  let stream = null;
+  let currentDeviceId = null;
+  let devices = [];
+  let lastImageBlob = null;
 
-// ذاكرة مؤقتة بسيطة (تتعلم من المستخدم)
-const memory = [];
+  // كائن canvas مؤقت للرسم
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
 
-function appendMessage(text, cls='bot') {
-  const d = document.createElement('div');
-  d.className = 'msg ' + cls;
-  d.innerText = text;
-  messagesEl.appendChild(d);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
+  function logStatus(text){ status.textContent = 'الحالة: ' + text; }
 
-function getReply(text) {
-  // 1) تجربة القواعد
-  for (let r of rules) {
-    for (let p of r.patterns) {
-      if (p.test(text)) return r.reply;
-    }
-  }
-  // 2) تجربة الذاكرة البسيطة (استرجاع إجابة مشابهة)
-  for (let item of memory.slice().reverse()) {
-    if (text.includes(item.key)) return "حسب ما قلته سابقاً: " + item.value;
-  }
-  // 3) رد افتراضي وطلب توضيح (نستطيع حفظ الإجابة التي يعطيها المستخدم)
-  return "ما فهمتش ملاح. قدر تعلمني الإجابة الصحيحة؟ (اكتب: علّمني: ثم الإجابة)";
-}
-
-form.addEventListener('submit', e=> {
-  e.preventDefault();
-  const text = inp.value.trim();
-  if (!text) return;
-  appendMessage(text, 'user');
-  inp.value = '';
-
-  // تعلم إن طلب التعلم
-  if (/^علمني[:：\s]/i.test(text)) {
-    // الصيغة: علمني: مفتاح => قيمة
-    const parts = text.split(/[:：]/);
-    if (parts.length >= 2) {
-      const rest = parts.slice(1).join(':').trim();
-      // نأخذ أول كلمة كمفتاح وباقي النص كقيمة
-      const key = rest.split(/\s+/)[0];
-      const value = rest.substring(key.length).trim() || "تم التعلم";
-      memory.push({key: key, value: value});
-      appendMessage("تم التعلم! سأستخدم هذا لاحقاً.");
-      return;
+  async function listCameras(){
+    try {
+      const infos = await navigator.mediaDevices.enumerateDevices();
+      devices = infos.filter(d => d.kind === 'videoinput');
+      cameraSelect.innerHTML = '';
+      devices.forEach((d, i) => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.text = d.label || `كاميرا ${i+1}`;
+        cameraSelect.appendChild(opt);
+      });
+      if(devices.length === 0){
+        cameraSelect.innerHTML = '<option>لا توجد كاميرات</option>';
+      }
+    } catch (e) {
+      cameraSelect.innerHTML = '<option>خطأ في جلب الكاميرات</option>';
+      console.error(e);
     }
   }
 
-  // نجيب برد ذكي
-  const reply = getReply(text);
-  setTimeout(()=>appendMessage(reply,'bot'), 350 + Math.random()*400);
-});
+  async function startCamera(deviceId = null){
+    stopCamera();
+    const constraints = {
+      audio: false,
+      video: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: deviceId ? undefined : { ideal: "user" }
+      }
+    };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      // احصل على deviceId الفعلي المستخدم
+      const track = stream.getVideoTracks()[0];
+      const settings = track.getSettings();
+      currentDeviceId = settings.deviceId || deviceId;
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      captureBtn.disabled = false;
+      logStatus('التصوير جارٍ');
+      await listCameras();
+      // حدد القائمه على الجهاز الجاري
+      if(currentDeviceId){
+        cameraSelect.value = currentDeviceId;
+      }
+    } catch (err) {
+      console.error(err);
+      if (err.name === 'NotAllowedError') {
+        logStatus('لم يُسمح بالوصول للكاميرا — اعطه إذن');
+        alert('يجب السماح بالوصول للكاميرا لكي تعمل هذه الصفحة.');
+      } else {
+        logStatus('خطأ في تشغيل الكاميرا');
+        alert('حدث خطأ عند تشغيل الكاميرا: ' + (err.message || err));
+      }
+    }
+  }
+
+  function stopCamera(){
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+      video.srcObject = null;
+    }
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    captureBtn.disabled = true;
+    logStatus('مقفلة');
+  }
+
+  // التقاط الصورة
+  async function capture(){
+    if(!stream) return;
+    // ضبط حجم الكانفاس وفقا للفيديو الحالي
+    const settings = stream.getVideoTracks()[0].getSettings();
+    const vw = settings.width || video.videoWidth || 1280;
+    const vh = settings.height || video.videoHeight || 720;
+    // نستخدم أبعاد العرض الحالية للعنصر لتقليل حجم الصورة على الأجهزة الصغيرة
+    const displayW = video.clientWidth;
+    const ratio = vw / displayW;
+    canvas.width = Math.floor(displayW);
+    canvas.height = Math.floor((video.clientHeight) || (vh/ratio));
+
+    // رسم الإطار الحالي
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // تأثير فلاش صغير
+    flash.style.opacity = 1;
+    setTimeout(()=>{ flash.style.opacity = 0; }, 120);
+
+    // حزّم الصورة كبِلوك
+    return new Promise(resolve => {
+      canvas.toBlob(blob => {
+        lastImageBlob = blob;
+        const url = URL.createObjectURL(blob);
+        downloadLink.href = url;
+        downloadBtn.disabled = false;
+        downloadLink.download = `photo-${Date.now()}.png`;
+        // عرض مصغرة في المعرض
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = 'صورة ملتقطة';
+        img.loading = 'lazy';
+        img.addEventListener('click', ()=> {
+          // عند النقر نفتح الصورة في نافذة جديدة
+          window.open(url, '_blank');
+        });
+        thumbs.prepend(img);
+        resolve({blob, url});
+      }, 'image/png');
+    });
+  }
+
+  // تبديل الكاميرا إلى التالية في القائمة (إن وُجدت)
+  function switchCamera(){
+    if(devices.length <= 1) return;
+    const ids = devices.map(d => d.deviceId);
+    const idx = ids.indexOf(cameraSelect.value);
+    const next = ids[(idx + 1) % ids.length];
+    cameraSelect.value = next;
+    startCamera(next);
+  }
+
+  // أحداث الواجهة
+  startBtn.addEventListener('click', ()=> startCamera(cameraSelect.value || null));
+  stopBtn.addEventListener('click', stopCamera);
+  captureBtn.addEventListener('click', ()=> capture().catch(console.error));
+  switchBtn.addEventListener('click', switchCamera);
+  cameraSelect.addEventListener('change', ()=> {
+    // إذا كانت الكاميرا تعمل، أعد التشغيل بالجهاز الجديد
+    if(stream) startCamera(cameraSelect.value);
+  });
+  downloadBtn.addEventListener('click', ()=> {
+    if(!lastImageBlob) return;
+    // الرابط جاهز من قبل (downloadLink.href)
+  });
+  clearBtn.addEventListener('click', ()=> {
+    thumbs.innerHTML = '';
+  });
+
+  // دعنا نحاول سرد الكاميرات فوراً (قد لا تظهر تسميات إلا بعد إذن)
+  await listCameras();
+
+  // تجربة: بدء تلقائي إذا سمح المستخدم سابقاً (غير مضمون)
+  // لا نبدأ تلقائياً لكي لا نزعج المستخدم؛ ننتظر ضغطه.
+})();
 </script>
 </body>
 </html>
