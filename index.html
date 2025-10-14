@@ -1,1 +1,99 @@
-يدك فيه
+<!doctype html>
+<html lang="ar">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بوت ذكي بسيط</title>
+<style>
+  body{font-family:Tahoma,Arial;background:#f7f7f7;padding:20px;direction:rtl}
+  #app{max-width:720px;margin:0 auto;background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+  .messages{height:400px;overflow:auto;border:1px solid #eee;padding:10px;border-radius:6px;background:#fafafa}
+  .msg{margin:8px 0;padding:8px;border-radius:6px;max-width:80%;}
+  .user{background:#dff4ff;margin-left:auto}
+  .bot{background:#fff;margin-right:auto;border:1px solid #eee}
+  form{display:flex;gap:8px;margin-top:10px}
+  input{flex:1;padding:10px;border-radius:6px;border:1px solid #ccc}
+  button{padding:10px 14px;border-radius:6px;border:0;background:#0b84ff;color:#fff;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <h2>بوت ذكي (قواعد + تعلم بسيط)</h2>
+  <div class="messages" id="messages"></div>
+
+  <form id="form">
+    <input id="inp" autocomplete="off" placeholder="اكتب سؤالك..." />
+    <button>أرسل</button>
+  </form>
+  <p style="color:#666;margin-top:8px">هذا بوت محلي بسيط: قواعد + إجابات مُهيأة + ذاكرة مؤقتة.</p>
+</div>
+
+<script>
+const messagesEl = document.getElementById('messages');
+const form = document.getElementById('form');
+const inp = document.getElementById('inp');
+
+// قاعدة بسيطة من أزواج (نماذج سؤال -> جواب)
+const rules = [
+  {patterns: [/مرحبا/i, /سلام/i, /أهلا/i], reply: "أهلاً! كيف نقدر نعاونك اليوم؟"},
+  {patterns: [/اسمك/i, /شنو اسمك/i], reply: "أنا بوت ذكي بسيط، تقدر تسميّني بوت."},
+  {patterns: [/كيف حالك/i, /واش راك/i], reply: "بخير الحمد لله! وإنت؟"},
+  {patterns: [/كود/i, /برمجة/i], reply: "نقدر نعاونك بكود بايثون، جافاسكربت، أو نصائح برمجة — قل لي ماذا تريد."},
+  {patterns: [/شكرا/i, /يعطيك الصحة/i], reply: "بالعفو! أي حاجة أخرى؟"}
+];
+
+// ذاكرة مؤقتة بسيطة (تتعلم من المستخدم)
+const memory = [];
+
+function appendMessage(text, cls='bot') {
+  const d = document.createElement('div');
+  d.className = 'msg ' + cls;
+  d.innerText = text;
+  messagesEl.appendChild(d);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function getReply(text) {
+  // 1) تجربة القواعد
+  for (let r of rules) {
+    for (let p of r.patterns) {
+      if (p.test(text)) return r.reply;
+    }
+  }
+  // 2) تجربة الذاكرة البسيطة (استرجاع إجابة مشابهة)
+  for (let item of memory.slice().reverse()) {
+    if (text.includes(item.key)) return "حسب ما قلته سابقاً: " + item.value;
+  }
+  // 3) رد افتراضي وطلب توضيح (نستطيع حفظ الإجابة التي يعطيها المستخدم)
+  return "ما فهمتش ملاح. قدر تعلمني الإجابة الصحيحة؟ (اكتب: علّمني: ثم الإجابة)";
+}
+
+form.addEventListener('submit', e=> {
+  e.preventDefault();
+  const text = inp.value.trim();
+  if (!text) return;
+  appendMessage(text, 'user');
+  inp.value = '';
+
+  // تعلم إن طلب التعلم
+  if (/^علمني[:：\s]/i.test(text)) {
+    // الصيغة: علمني: مفتاح => قيمة
+    const parts = text.split(/[:：]/);
+    if (parts.length >= 2) {
+      const rest = parts.slice(1).join(':').trim();
+      // نأخذ أول كلمة كمفتاح وباقي النص كقيمة
+      const key = rest.split(/\s+/)[0];
+      const value = rest.substring(key.length).trim() || "تم التعلم";
+      memory.push({key: key, value: value});
+      appendMessage("تم التعلم! سأستخدم هذا لاحقاً.");
+      return;
+    }
+  }
+
+  // نجيب برد ذكي
+  const reply = getReply(text);
+  setTimeout(()=>appendMessage(reply,'bot'), 350 + Math.random()*400);
+});
+</script>
+</body>
+</html>
