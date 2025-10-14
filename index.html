@@ -1,51 +1,201 @@
-  <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>النظام المدمج - Garena API + Free Fire Bot</title>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
-                            .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                            h1 { color: #2c3e50; text-align: center; }
-                            .status { padding: 15px; margin: 10px 0; border-radius: 5px; }
-                            .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-                            .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
-                            .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-                            .endpoint { background: #f8f9fa; padding: 10px; margin: 5px 0; border-left: 4px solid #007bff; }
-                            code { background: #f8f9fa; padding: 2px 4px; border-radius: 3px; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <h1>🎮 النظام المدمج: Garena API + Free Fire Bot</h1>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>M31 — Web Prototype</title>
+  <style>
+    :root{--bg:#7ec8a8;--ui:#083d2d;--accent:#ffd24a;--panel:rgba(255,255,255,0.85)}
+    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial}
+    #gameWrap{display:flex;flex-direction:column;height:100vh;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg),#4aa07f)}
+    canvas{background:linear-gradient(180deg,#9ee0c9,#6fc49e);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25)}
+    #uiTop{width:100%;max-width:980px;display:flex;justify-content:space-between;padding:10px 12px;box-sizing:border-box}
+    .panel{background:var(--panel);padding:8px 12px;border-radius:10px;display:flex;gap:12px;align-items:center}
+    #controlsMobile{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;gap:12px}
+    .btn{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);font-weight:700}
+    .small{width:44px;height:44px;border-radius:10px}
+    #hud{display:flex;gap:12px;align-items:center}
+    #title{font-weight:700;color:var(--ui);font-size:18px}
+    #settings{display:flex;gap:8px;align-items:center}
+    select,input[type=checkbox]{padding:6px;border-radius:6px;border:1px solid rgba(0,0,0,0.08)}
+    #footer{margin-top:10px;color:#053;opacity:0.95}
+    @media (max-width:700px){
+      #controlsMobile{display:flex}
+      canvas{width:92vw;height:57vw}
+    }
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <div id="uiTop">
+      <div class="panel">
+        <div id="title">M31</div>
+        <div id="hud">
+          <div id="coins">Coins: 0</div>
+          <div id="lives">Lives: ❤️❤️❤️</div>
+          <div id="levelInfo">Level 1-1</div>
+        </div>
+      </div>
+      <div class="panel" id="settings">
+        <label>Lang:
+          <select id="langSel"><option value="en">English</option><option value="ar">العربية</option></select>
+        </label>
+        <label>Music <input type="checkbox" id="musicToggle" checked></label>
+        <button id="pauseBtn" class="small">Pause</button>
+      </div>
+    </div>
 
-                            <div class="status success">
-                                <h3>✅ حالة النظام</h3>
-                                <p>الخادم يعمل بشكل طبيعي على البورت 5000</p>
-                                <p>التوكن: ''' + ("متصل" if shared_token_data.get("access_token") else "غير متصل") + '''</p>
-                                <p>البوتات النشطة: ''' + str(len(active_bots)) + '''</p>
-                                <p>حالة البوت: ''' + ("متاح" if BOT_AVAILABLE else "غير متاح") + '''</p>
-                            </div>
+    <canvas id="c" width="980" height="560"></canvas>
 
-                            <div class="status info">
-                                <h3>📋 الـ APIs المتاحة</h3>
-                                <div class="endpoint"><code>GET /token/status</code> - حالة التوكن</div>
-                                <div class="endpoint"><code>POST /bot/start</code> - بدء البوت</div>
-                                <div class="endpoint"><code>POST /bot/stop</code> - إيقاف البوت</div>
-                                <div class="endpoint"><code>GET /bot/status</code> - حالة البوت</div>
-                                <div class="endpoint"><code>GET /bot/accounts</code> - قائمة الحسابات</div>
-                                <div class="endpoint"><code>GET /player/profile/<id></code> - ملف اللاعب</div>
-                                <div class="endpoint"><code>POST /clan/search</code> - البحث عن الكلانات</div>
-                                <div class="endpoint"><code>GET /logs</code> - عرض السجلات</div>
-                                <div class="endpoint"><code>GET /system/info</code> - معلومات النظام</div>
-                                <div class="endpoint"><strong><a href="/bot-control" style="color: #007bff;">🎮 Bot Control Panel</a></strong> - واجهة تحكم البوت</div>
-                            </div>
+    <div id="controlsMobile">
+      <div class="btn" id="leftBtn">◀</div>
+      <div class="btn" id="rightBtn">▶</div>
+      <div class="btn" id="jumpBtn">⤴</div>
+      <div class="btn" id="attackBtn">⚡</div>
+    </div>
 
-                            <div class="status warning">
-                                <h3>⚠️ ملاحظة</h3>
-                                <p>لعرض واجهة أفضل، تأكد من وجود ملف التمبليت المناسب</p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
+    <div id="footer">(Prototype web playable) — اضغط لإعادة تعيين المستوى</div>
+  </div>
+
+<script>
+// M31 Web Prototype — single-file platformer
+// Features: mobile controls, 4 worlds x 5 levels (simple layouts), coins, lives, checkpoint (start), flag to finish
+
+const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
+let W=canvas.width, H=canvas.height;
+
+// responsive scaling for high-DPI
+function resize(){
+  const ratio = Math.min(window.devicePixelRatio||1,2);
+  canvas.width = 980 * ratio;
+  canvas.height = 560 * ratio;
+  canvas.style.width = Math.min(window.innerWidth-40,980)+'px';
+  canvas.style.height = (canvas.width*560/980)+'px';
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  W = canvas.width/ratio; H = canvas.height/ratio;
+}
+window.addEventListener('resize', resize); resize();
+
+// Game state
+let coinCount=0, lives=3, currentWorld=1, currentLevel=1, paused=false, language='en';
+const TOTAL_WORLDS=4, LEVELS_PER_WORLD=5;
+
+// Simple level generator (procedural-ish) — returns platforms, coins, flag
+function makeLevel(world,level){
+  const platforms=[]; const coins=[];
+  const baseY = H-60;
+  // ground
+  platforms.push({x:0,y:baseY,w:W,h:60});
+  // a few platforms depending on level
+  const n = 4 + Math.min(6, level);
+  for(let i=0;i<n;i++){
+    const pw = 120 + (i%3)*30;
+    const px = 120 + i*(W-240)/n + (Math.sin(i+level)*20);
+    const py = baseY - 80 - (i%3)*60 - Math.min(120, level*6);
+    platforms.push({x:px,y:py,w:pw,h:18});
+    // coins over some platforms
+    if(Math.random()<0.8){
+      coins.push({x:px+20,y:py-24, collected:false});
+    }
+  }
+  // Add pits: remove some ground segments
+  // Flag at end
+  const flag = {x:W-100,y:baseY-140,w:40,h:140};
+  return {platforms,coins,flag};
+}
+
+// Player
+const player = {x:60,y:0,w:42,h:56,vx:0,vy:0,onGround:false,facing:1,alive:true,canDoubleJump:true};
+let levelData = makeLevel(currentWorld,currentLevel);
+coinCount=0;
+
+// Controls
+const keys={left:false,right:false,jump:false,attack:false};
+window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true;if(e.key===' '||e.key==='ArrowUp'||e.key==='w')keys.jump=true;if(e.key==='k')keys.attack=true;});
+window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false;if(e.key===' '||e.key==='ArrowUp'||e.key==='w')keys.jump=false;if(e.key==='k')keys.attack=false;});
+
+// Mobile buttons
+['leftBtn','rightBtn','jumpBtn','attackBtn'].forEach(id=>{const el=document.getElementById(id);if(el){el.addEventListener('touchstart',e=>{e.preventDefault(); if(id==='leftBtn') keys.left=true; if(id==='rightBtn') keys.right=true; if(id==='jumpBtn') keys.jump=true; if(id==='attackBtn') keys.attack=true}); el.addEventListener('touchend',e=>{e.preventDefault(); if(id==='leftBtn') keys.left=false; if(id==='rightBtn') keys.right=false; if(id==='jumpBtn') keys.jump=false; if(id==='attackBtn') keys.attack=false});}});
+
+// Simple audio (beeps)
+function beep(level=0.2){ try{ const ctxA=new (window.AudioContext||window.webkitAudioContext)(); const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.connect(g); g.connect(ctxA.destination); o.type='sine'; o.frequency.value=600; g.gain.value=0.03; o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctxA.currentTime+0.12);}catch(e){} }
+
+// UI updates
+function updateUI(){ document.getElementById('coins').textContent = (language==='ar'?'العملات: ':'Coins: ')+coinCount; document.getElementById('lives').textContent = (language==='ar'?'حياة: ':'Lives: ')+ '❤️'.repeat(lives); document.getElementById('levelInfo').textContent = (language==='ar'?`المستوى ${currentWorld}-${currentLevel}`:`Level ${currentWorld}-${currentLevel}`); }
+
+// Collision helpers
+function rectIntersect(a,b){return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y}
+
+// Reset level
+function loadLevel(w,l){ currentWorld=w; currentLevel=l; levelData = makeLevel(w,l); player.x=60; player.y=100; player.vx=0; player.vy=0; player.onGround=false; coinCount=0; updateUI(); }
+
+// Next level
+function nextLevel(){ if(currentLevel < LEVELS_PER_WORLD){ loadLevel(currentWorld, currentLevel+1);} else if(currentWorld < TOTAL_WORLDS){ loadLevel(currentWorld+1,1);} else { // finished all
+  alert(language==='ar'?'مبروك! أنهيت اللعبة!':'Congratulations! You finished the game!'); loadLevel(1,1); }
+}
+
+// Main loop
+let last=0; function loop(t){ if(paused){ last=t; requestAnimationFrame(loop); return; } const dt=Math.min(0.032,(t-last)/1000); last=t;
+  // physics
+  const acc = 2400; // px/s^2 gravity approx
+  // horizontal
+  if(keys.left) player.vx = -220; else if(keys.right) player.vx = 220; else player.vx = 0;
+  // jump
+  if(keys.jump){ if(player.onGround){ player.vy = -520; player.onGround=false; player.canDoubleJump=true; beep(); } else if(player.canDoubleJump){ player.vy = -460; player.canDoubleJump=false; beep(); }}
+  // apply gravity
+  player.vy += acc*dt;
+  player.x += player.vx*dt; player.y += player.vy*dt;
+  // world bounds
+  if(player.x < 0) player.x = 0; if(player.x+player.w > W) player.x = W-player.w;
+  if(player.y > H+200){ // fell
+    lives--; if(lives<=0){ alert(language==='ar'?'انتهت حياتك! الرجوع للمستوى الأول':'Out of lives! Back to level 1'); lives=3; loadLevel(1,1);} else { loadLevel(currentWorld,currentLevel); }
+  }
+  // collisions with platforms
+  player.onGround=false;
+  for(const p of levelData.platforms){
+    if(rectIntersect(player,p)){
+      // simple correction: if player's bottom was above platform center, put on top
+      if(player.y + player.h - player.vy*dt <= p.y + 6){ player.y = p.y - player.h; player.vy = 0; player.onGround = true; }
+      else if(player.x + player.w - player.vx*dt >= p.x + p.w - 6){ player.x = p.x + p.w; player.vx = 0; }
+      else if(player.x - player.vx*dt <= p.x + 6){ player.x = p.x - player.w; player.vx = 0; }
+    }
+  }
+  // coins
+  for(const c of levelData.coins){ if(!c.collected){ if(player.x+player.w/2 > c.x-8 && player.x+player.w/2 < c.x+8 && player.y+player.h > c.y){ c.collected=true; coinCount++; beep(); } }}
+  // flag
+  const flag = levelData.flag; if(player.x + player.w > flag.x && player.y + player.h > flag.y){ // reached
+    beep(); setTimeout(()=>nextLevel(),300); }
+
+  draw(); updateUI(); requestAnimationFrame(loop);
+}
+
+function draw(){ ctx.clearRect(0,0,W,H);
+  // background hills
+  ctx.fillStyle='#6fbf96'; ctx.fillRect(0,H-140,W,140);
+  // platforms
+  ctx.fillStyle='#6c4d2d'; for(const p of levelData.platforms){ ctx.fillRect(p.x,p.y,p.w,p.h); ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.strokeRect(p.x,p.y,p.w,p.h); }
+  // coins
+  for(const c of levelData.coins){ if(!c.collected){ ctx.fillStyle= '#ffd24a'; ctx.beginPath(); ctx.arc(c.x,c.y,8,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#b37d00'; ctx.stroke(); }}
+  // flag
+  ctx.fillStyle='#ff2d55'; ctx.fillRect(levelData.flag.x, levelData.flag.y, 12, levelData.flag.h);
+  ctx.fillStyle='#fff'; ctx.fillRect(levelData.flag.x+12, levelData.flag.y+10, 34,20);
+  // player
+  ctx.fillStyle='#073b2d'; ctx.fillRect(player.x,player.y,player.w,player.h);
+  // HUD small texts
+  ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.font='14px system-ui'; ctx.fillText('World '+currentWorld+' - Level '+currentLevel, 12, 28);
+}
+
+// UI bindings
+document.getElementById('pauseBtn').addEventListener('click',()=>{paused=!paused; document.getElementById('pauseBtn').textContent = paused? (language==='ar'?'استئناف':'Resume') : 'Pause';});
+document.getElementById('langSel').addEventListener('change',(e)=>{ language=e.target.value; updateUI();});
+document.getElementById('musicToggle').addEventListener('change',(e)=>{/* placeholder */});
+
+// click canvas to reset level quickly
+canvas.addEventListener('click', ()=>{ loadLevel(currentWorld,currentLevel); });
+
+// start
+updateUI(); requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>
