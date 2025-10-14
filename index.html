@@ -1,201 +1,361 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>M31 — Web Prototype</title>
-  <style>
-    :root{--bg:#7ec8a8;--ui:#083d2d;--accent:#ffd24a;--panel:rgba(255,255,255,0.85)}
-    html,body{height:100%;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial}
-    #gameWrap{display:flex;flex-direction:column;height:100vh;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg),#4aa07f)}
-    canvas{background:linear-gradient(180deg,#9ee0c9,#6fc49e);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.25)}
-    #uiTop{width:100%;max-width:980px;display:flex;justify-content:space-between;padding:10px 12px;box-sizing:border-box}
-    .panel{background:var(--panel);padding:8px 12px;border-radius:10px;display:flex;gap:12px;align-items:center}
-    #controlsMobile{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;gap:12px}
-    .btn{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);font-weight:700}
-    .small{width:44px;height:44px;border-radius:10px}
-    #hud{display:flex;gap:12px;align-items:center}
-    #title{font-weight:700;color:var(--ui);font-size:18px}
-    #settings{display:flex;gap:8px;align-items:center}
-    select,input[type=checkbox]{padding:6px;border-radius:6px;border:1px solid rgba(0,0,0,0.08)}
-    #footer{margin-top:10px;color:#053;opacity:0.95}
-    @media (max-width:700px){
-      #controlsMobile{display:flex}
-      canvas{width:92vw;height:57vw}
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>لعبة الديناصور</title>
+<style>
+  :root{
+    --bg:#f4f4f4;
+    --ground:#757575;
+    --player:#222;
+    --ob:#2b2b2b;
+    --accent:#0b84ff;
+  }
+  html,body{height:100%;margin:0;font-family:Verdana,Arial;direction:rtl}
+  body{display:flex;align-items:center;justify-content:center;background:var(--bg)}
+  #gameWrap{width:900px;max-width:96vw;background:#fff;border-radius:8px;box-shadow:0 6px 30px rgba(0,0,0,.08);padding:16px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  h1{font-size:18px;margin:0;color:#111}
+  .controls{font-size:14px;color:#444}
+  #canvas{background:linear-gradient(#eaf0ff, #fff);display:block;border-radius:6px;width:100%;height:300px}
+  .info{display:flex;gap:12px;align-items:center;margin-top:8px}
+  .score{font-weight:700;color:var(--accent)}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+  button:active{transform:translateY(1px)}
+  footer{margin-top:8px;color:#666;font-size:13px}
+  /* small hint */
+  .hint{font-size:13px;color:#666}
+</style>
 </head>
 <body>
-  <div id="gameWrap">
-    <div id="uiTop">
-      <div class="panel">
-        <div id="title">M31</div>
-        <div id="hud">
-          <div id="coins">Coins: 0</div>
-          <div id="lives">Lives: يدك فيه 😂</div>
-          <div id="levelInfo">Level 1-1</div>
-        </div>
-      </div>
-      <div class="panel" id="settings">
-        <label>Lang:
-          <select id="langSel"><option value="en">English</option><option value="ar">العربية</option></select>
-        </label>
-        <label>Music <input type="checkbox" id="musicToggle" checked></label>
-        <button id="pauseBtn" class="small">Pause</button>
-      </div>
+<div id="gameWrap" role="application" aria-label="لعبة ديناصور">
+  <header>
+    <h1>لعبة الديناصور</h1>
+    <div class="controls">
+      <span class="hint">اضغط مسافة / اسهم للأعلى للقفز — اضغط لأسفل للإنزلاق</span>
     </div>
+  </header>
 
-    <canvas id="c" width="980" height="560"></canvas>
+  <canvas id="canvas" width="900" height="300" tabindex="0"></canvas>
 
-    <div id="controlsMobile">
-      <div class="btn" id="leftBtn">◀</div>
-      <div class="btn" id="rightBtn">▶</div>
-      <div class="btn" id="jumpBtn">⤴</div>
-      <div class="btn" id="attackBtn">☺️</div>
+  <div class="info" style="justify-content:space-between">
+    <div>
+      <span>النتيجة: </span><span id="score" class="score">0</span>
     </div>
-
-    <div id="footer">(Prototype web playable) — اضغط لإعادة تعيين المستوى</div>
+    <div>
+      <button id="startBtn">ابدأ أو أعد اللعب</button>
+    </div>
   </div>
 
+  <footer>لمصمّم بسيط — يعمل على الموبايل (اضغط الشاشة للقفز)</footer>
+</div>
+
 <script>
-// M31 Web Prototype — single-file platformer
-// Features: mobile controls, 4 worlds x 5 levels (simple layouts), coins, lives, checkpoint (start), flag to finish
+/* لعبة ديناصور بسيطة — مدمج في ملف واحد
+   - كائن اللاعب: يقفز وينزلق
+   - عقبات عشوائية
+   - عداد نقاط متزايد
+   - دعم لمس للموبايل + مفاتيح لوحة المفاتيح
+*/
 
-const canvas=document.getElementById('c');const ctx=canvas.getContext('2d');
-let W=canvas.width, H=canvas.height;
+(() => {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const startBtn = document.getElementById('startBtn');
+  const scoreEl = document.getElementById('score');
 
-// responsive scaling for high-DPI
-function resize(){
-  const ratio = Math.min(window.devicePixelRatio||1,2);
-  canvas.width = 980 * ratio;
-  canvas.height = 560 * ratio;
-  canvas.style.width = Math.min(window.innerWidth-40,980)+'px';
-  canvas.style.height = (canvas.width*560/980)+'px';
-  ctx.setTransform(ratio,0,0,ratio,0,0);
-  W = canvas.width/ratio; H = canvas.height/ratio;
-}
-window.addEventListener('resize', resize); resize();
+  let W = canvas.width, H = canvas.height;
+  let running = false, gameOver = false;
+  let score = 0, speed = 6, spawnTimer = 0, spawnInterval = 90;
 
-// Game state
-let coinCount=0, lives=3, currentWorld=1, currentLevel=1, paused=false, language='en';
-const TOTAL_WORLDS=4, LEVELS_PER_WORLD=5;
+  // اللاعب
+  const player = {
+    x: 50,
+    y: H - 70,
+    width: 44,
+    height: 44,
+    vy: 0,
+    gravity: 1.6,
+    jumpForce: -18,
+    grounded: true,
+    ducking: false,
+    draw() {
+      ctx.save();
+      ctx.fillStyle = '#222';
+      // رسم بسيط: مربع مع عين
+      if (this.ducking) {
+        ctx.fillRect(this.x, this.y + 18, this.width, this.height - 18);
+      } else {
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+      }
+      // عين
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(this.x + 28, this.y + (this.ducking ? 28 : 12), 6, 6);
+      ctx.restore();
+    },
+    update() {
+      // تطبيق الجاذبية
+      this.vy += this.gravity;
+      this.y += this.vy;
 
-// Simple level generator (procedural-ish) — returns platforms, coins, flag
-function makeLevel(world,level){
-  const platforms=[]; const coins=[];
-  const baseY = H-60;
-  // ground
-  platforms.push({x:0,y:baseY,w:W,h:60});
-  // a few platforms depending on level
-  const n = 4 + Math.min(6, level);
-  for(let i=0;i<n;i++){
-    const pw = 120 + (i%3)*30;
-    const px = 120 + i*(W-240)/n + (Math.sin(i+level)*20);
-    const py = baseY - 80 - (i%3)*60 - Math.min(120, level*6);
-    platforms.push({x:px,y:py,w:pw,h:18});
-    // coins over some platforms
-    if(Math.random()<0.8){
-      coins.push({x:px+20,y:py-24, collected:false});
+      // اصطدام بالأرض
+      const groundY = H - 50; // فوق الأرض بمقدار player's height
+      if (this.y + this.height >= groundY) {
+        this.y = groundY - this.height;
+        this.vy = 0;
+        this.grounded = true;
+      } else {
+        this.grounded = false;
+      }
+    },
+    jump() {
+      if (this.grounded) {
+        this.vy = this.jumpForce;
+        this.grounded = false;
+        this.ducking = false;
+      }
+    },
+    duck(state) {
+      if (this.grounded) {
+        this.ducking = state;
+      }
+    },
+    getRect() {
+      // يصغر ال-hitbox عند الانزلاق
+      if (this.ducking) return {x:this.x, y:this.y+18, w:this.width, h:this.height-18};
+      return {x:this.x, y:this.y, w:this.width, h:this.height};
+    }
+  };
+
+  // عقبات
+  let obstacles = [];
+  function spawnObstacle() {
+    const type = Math.random() < 0.6 ? 'cactus' : 'ptero';
+    if (type === 'cactus') {
+      const h = 30 + Math.random()*40;
+      obstacles.push({
+        kind: 'cactus',
+        x: W + 20,
+        y: H - 50 - h,
+        w: 20 + Math.floor(Math.random()*18),
+        h: h,
+      });
+    } else {
+      // ديناصور طائر
+      const size = 34;
+      const yOptions = [H - 160, H - 120, H - 80];
+      obstacles.push({
+        kind: 'ptero',
+        x: W + 20,
+        y: yOptions[Math.floor(Math.random()*yOptions.length)],
+        w: size,
+        h: size,
+      });
     }
   }
-  // Add pits: remove some ground segments
-  // Flag at end
-  const flag = {x:W-100,y:baseY-140,w:40,h:140};
-  return {platforms,coins,flag};
-}
 
-// Player
-const player = {x:60,y:0,w:42,h:56,vx:0,vy:0,onGround:false,facing:1,alive:true,canDoubleJump:true};
-let levelData = makeLevel(currentWorld,currentLevel);
-coinCount=0;
-
-// Controls
-const keys={left:false,right:false,jump:false,attack:false};
-window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=true;if(e.key==='ArrowRight'||e.key==='d')keys.right=true;if(e.key===' '||e.key==='ArrowUp'||e.key==='w')keys.jump=true;if(e.key==='k')keys.attack=true;});
-window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;if(e.key==='ArrowRight'||e.key==='d')keys.right=false;if(e.key===' '||e.key==='ArrowUp'||e.key==='w')keys.jump=false;if(e.key==='k')keys.attack=false;});
-
-// Mobile buttons
-['leftBtn','rightBtn','jumpBtn','attackBtn'].forEach(id=>{const el=document.getElementById(id);if(el){el.addEventListener('touchstart',e=>{e.preventDefault(); if(id==='leftBtn') keys.left=true; if(id==='rightBtn') keys.right=true; if(id==='jumpBtn') keys.jump=true; if(id==='attackBtn') keys.attack=true}); el.addEventListener('touchend',e=>{e.preventDefault(); if(id==='leftBtn') keys.left=false; if(id==='rightBtn') keys.right=false; if(id==='jumpBtn') keys.jump=false; if(id==='attackBtn') keys.attack=false});}});
-
-// Simple audio (beeps)
-function beep(level=0.2){ try{ const ctxA=new (window.AudioContext||window.webkitAudioContext)(); const o=ctxA.createOscillator(); const g=ctxA.createGain(); o.connect(g); g.connect(ctxA.destination); o.type='sine'; o.frequency.value=600; g.gain.value=0.03; o.start(); g.gain.exponentialRampToValueAtTime(0.0001, ctxA.currentTime+0.12);}catch(e){} }
-
-// UI updates
-function updateUI(){ document.getElementById('coins').textContent = (language==='ar'?'العملات: ':'Coins: ')+coinCount; document.getElementById('lives').textContent = (language==='ar'?'حياة: ':'Lives: ')+ '❤️'.repeat(lives); document.getElementById('levelInfo').textContent = (language==='ar'?`المستوى ${currentWorld}-${currentLevel}`:`Level ${currentWorld}-${currentLevel}`); }
-
-// Collision helpers
-function rectIntersect(a,b){return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y}
-
-// Reset level
-function loadLevel(w,l){ currentWorld=w; currentLevel=l; levelData = makeLevel(w,l); player.x=60; player.y=100; player.vx=0; player.vy=0; player.onGround=false; coinCount=0; updateUI(); }
-
-// Next level
-function nextLevel(){ if(currentLevel < LEVELS_PER_WORLD){ loadLevel(currentWorld, currentLevel+1);} else if(currentWorld < TOTAL_WORLDS){ loadLevel(currentWorld+1,1);} else { // finished all
-  alert(language==='ar'?'! صاي كملت اخرج قود و يدك فيه تحيا روجي  !':'Congratulationsصاي اخرج قود كملت تحيا روجي 🥰'); loadLevel(1,1); }
-}
-
-// Main loop
-let last=0; function loop(t){ if(paused){ last=t; requestAnimationFrame(loop); return; } const dt=Math.min(0.032,(t-last)/1000); last=t;
-  // physics
-  const acc = 2400; // px/s^2 gravity approx
-  // horizontal
-  if(keys.left) player.vx = -220; else if(keys.right) player.vx = 220; else player.vx = 0;
-  // jump
-  if(keys.jump){ if(player.onGround){ player.vy = -520; player.onGround=false; player.canDoubleJump=true; beep(); } else if(player.canDoubleJump){ player.vy = -460; player.canDoubleJump=false; beep(); }}
-  // apply gravity
-  player.vy += acc*dt;
-  player.x += player.vx*dt; player.y += player.vy*dt;
-  // world bounds
-  if(player.x < 0) player.x = 0; if(player.x+player.w > W) player.x = W-player.w;
-  if(player.y > H+200){ // fell
-    lives--; if(lives<=0){ alert(language==='ar'?'انتهت حياتك! الرجوع للمستوى الأول':'Out of lives! Back to level 1'); lives=3; loadLevel(1,1);} else { loadLevel(currentWorld,currentLevel); }
-  }
-  // collisions with platforms
-  player.onGround=false;
-  for(const p of levelData.platforms){
-    if(rectIntersect(player,p)){
-      // simple correction: if player's bottom was above platform center, put on top
-      if(player.y + player.h - player.vy*dt <= p.y + 6){ player.y = p.y - player.h; player.vy = 0; player.onGround = true; }
-      else if(player.x + player.w - player.vx*dt >= p.x + p.w - 6){ player.x = p.x + p.w; player.vx = 0; }
-      else if(player.x - player.vx*dt <= p.x + 6){ player.x = p.x - player.w; player.vx = 0; }
+  // رسم الأرض
+  function drawGround(offset) {
+    const groundY = H - 50;
+    ctx.fillStyle = '#e7e7e7';
+    ctx.fillRect(0, groundY, W, 50);
+    // بعض أحجار الطريق المتحركة
+    ctx.fillStyle = '#757575';
+    for (let i = -40; i < W + 40; i += 40) {
+      const px = (i + offset) % (W + 80);
+      ctx.fillRect(px, groundY + 28, 12, 6);
     }
   }
-  // coins
-  for(const c of levelData.coins){ if(!c.collected){ if(player.x+player.w/2 > c.x-8 && player.x+player.w/2 < c.x+8 && player.y+player.h > c.y){ c.collected=true; coinCount++; beep(); } }}
-  // flag
-  const flag = levelData.flag; if(player.x + player.w > flag.x && player.y + player.h > flag.y){ // reached
-    beep(); setTimeout(()=>nextLevel(),300); }
 
-  draw(); updateUI(); requestAnimationFrame(loop);
-}
+  // فحص التصادم
+  function rectsCollide(a,b) {
+    return !(a.x + a.w < b.x || a.x > b.x + b.w || a.y + a.h < b.y || a.y > b.y + b.h);
+  }
 
-function draw(){ ctx.clearRect(0,0,W,H);
-  // background hills
-  ctx.fillStyle='#6fbf96'; ctx.fillRect(0,H-140,W,140);
-  // platforms
-  ctx.fillStyle='#6c4d2d'; for(const p of levelData.platforms){ ctx.fillRect(p.x,p.y,p.w,p.h); ctx.strokeStyle='rgba(0,0,0,0.12)'; ctx.strokeRect(p.x,p.y,p.w,p.h); }
-  // coins
-  for(const c of levelData.coins){ if(!c.collected){ ctx.fillStyle= '#ffd24a'; ctx.beginPath(); ctx.arc(c.x,c.y,8,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#b37d00'; ctx.stroke(); }}
-  // flag
-  ctx.fillStyle='#ff2d55'; ctx.fillRect(levelData.flag.x, levelData.flag.y, 12, levelData.flag.h);
-  ctx.fillStyle='#fff'; ctx.fillRect(levelData.flag.x+12, levelData.flag.y+10, 34,20);
-  // player
-  ctx.fillStyle='#073b2d'; ctx.fillRect(player.x,player.y,player.w,player.h);
-  // HUD small texts
-  ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.font='14px system-ui'; ctx.fillText('World '+currentWorld+' - Level '+currentLevel, 12, 28);
-}
+  // إعادة تعيين اللعبة
+  function reset() {
+    running = true;
+    gameOver = false;
+    score = 0;
+    speed = 6;
+    spawnTimer = 0;
+    obstacles = [];
+    player.y = H - 50 - player.height;
+    player.vy = 0;
+    player.ducking = false;
+    scoreEl.textContent = score;
+    loop();
+  }
 
-// UI bindings
-document.getElementById('pauseBtn').addEventListener('click',()=>{paused=!paused; document.getElementById('pauseBtn').textContent = paused? (language==='ar'?'استئناف':'Resume') : 'Pause';});
-document.getElementById('langSel').addEventListener('change',(e)=>{ language=e.target.value; updateUI();});
-document.getElementById('musicToggle').addEventListener('change',(e)=>{/* placeholder */});
+  // الحلقة الرئيسية
+  let lastTime = 0, groundOffset = 0;
+  function loop(ts) {
+    if (!running) return;
+    requestAnimationFrame(loop);
 
-// click canvas to reset level quickly
-canvas.addEventListener('click', ()=>{ loadLevel(currentWorld,currentLevel); });
+    // حساب فروق الوقت (غير ضروري هنا لكنه مفيد لو أردنا تعويض فريم)
+    const dt = (ts - lastTime) || 16;
+    lastTime = ts;
 
-// start
-updateUI(); requestAnimationFrame(loop);
+    // مسح
+    ctx.clearRect(0,0,W,H);
 
+    // تحديث وتوليد عقبات
+    spawnTimer++;
+    if (spawnTimer > spawnInterval) {
+      spawnTimer = 0;
+      spawnInterval = 60 + Math.floor(Math.random()*80) - Math.floor(score/200); // تزداد صعوبة
+      spawnObstacle();
+    }
+
+    // تحديث سرعة حسب النتيجة
+    speed = 6 + Math.floor(score/100);
+
+    // تحديث اللاعب
+    player.update();
+
+    // تحديث عقبات وتحريكها
+    for (let i = obstacles.length-1; i >= 0; i--) {
+      obstacles[i].x -= speed;
+      // إزالة إن خرجت من الشاشة
+      if (obstacles[i].x + obstacles[i].w < -50) obstacles.splice(i,1);
+    }
+
+    // رسم الخلفية (شمس / سحب بسيطة)
+    ctx.fillStyle = '#f2f8ff';
+    ctx.fillRect(0,0,W,H - 100);
+
+    // رسم الأرض وعناصرها
+    groundOffset -= speed;
+    drawGround(groundOffset);
+
+    // رسم اللاعب
+    player.draw();
+
+    // رسم العقبات
+    obstacles.forEach(obs => {
+      ctx.save();
+      ctx.fillStyle = '#2b2b2b';
+      if (obs.kind === 'cactus') {
+        // رسم صندوق بسيط مع نتوءات
+        ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+        ctx.fillStyle = '#1f1f1f';
+        ctx.fillRect(obs.x + 4, obs.y - 6, 6, 6);
+      } else {
+        // ptero - شكل جناحي مبسط
+        ctx.beginPath();
+        ctx.moveTo(obs.x, obs.y + obs.h/2);
+        ctx.lineTo(obs.x + obs.w/2, obs.y);
+        ctx.lineTo(obs.x + obs.w, obs.y + obs.h/2);
+        ctx.lineTo(obs.x + obs.w/2, obs.y + obs.h);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+
+    // فحص التصادم
+    const prect = player.getRect();
+    for (let obs of obstacles) {
+      const orect = {x: obs.x, y: obs.y, w: obs.w, h: obs.h};
+      if (rectsCollide({x:prect.x,y:prect.y,w:prect.w,h:prect.h}, orect)) {
+        // اصطدام -> نهاية اللعبة
+        running = false;
+        gameOver = true;
+        showGameOver();
+        return;
+      }
+    }
+
+    // تحديث وإظهار النتيجة
+    score += 1;
+    scoreEl.textContent = score;
+
+    // رسم شريط السرعة/مستوى (اختياري)
+    ctx.fillStyle = '#00000022';
+    ctx.fillRect(12,12,180,8);
+    ctx.fillStyle = '#0b84ff';
+    ctx.fillRect(12,12,Math.min(180, 40 + score/5),8);
+  }
+
+  function showGameOver() {
+    // لوحة بسيطة
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#fff';
+    ctx.font = '28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('انتهت اللعبة', W/2, H/2 - 10);
+    ctx.font = '16px Arial';
+    ctx.fillText('النقاط: ' + score, W/2, H/2 + 18);
+    ctx.restore();
+  }
+
+  // إدخال: لوحة المفاتيح + لمس
+  // قفز = مسافة أو سهم أعلى، انزلاق = سهم لأسفل
+  function onKeyDown(e) {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+      e.preventDefault();
+      if (!running) { reset(); } else player.jump();
+    } else if (e.code === 'ArrowDown') {
+      player.duck(true);
+    }
+  }
+  function onKeyUp(e) {
+    if (e.code === 'ArrowDown') player.duck(false);
+  }
+
+  // لمس للشاشات: لمسة سريعة = قفز، لمس مطوّل = انزلاق
+  let touchStartTime = 0;
+  canvas.addEventListener('touchstart', (ev) => {
+    ev.preventDefault();
+    touchStartTime = Date.now();
+    if (!running) { reset(); return; }
+    // فورياً نقفز
+    player.jump();
+  }, {passive:false});
+  canvas.addEventListener('touchend', (ev) => {
+    ev.preventDefault();
+    const dur = Date.now() - touchStartTime;
+    if (dur > 400) {
+      // لمسة طويلة -> انزلاق قصير
+      player.duck(true);
+      setTimeout(()=>player.duck(false), 500);
+    }
+  }, {passive:false});
+
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('keyup', onKeyUp);
+
+  // زر البداية
+  startBtn.addEventListener('click', () => {
+    reset();
+    canvas.focus();
+  });
+
+  // احجام متغيرة
+  function resizeCanvas() {
+    // نحافظ على نسبة داخلية لكن نترك رسوم ثابتة
+    const rect = canvas.getBoundingClientRect();
+    // نغير الأبعاد الفيزيائية للعرض ليتناسب مع CSS لكن نترك النظام الداخلي ثابت (900x300) لتبسيط الرسم
+    canvas.width = 900;
+    canvas.height = 300;
+    W = canvas.width; H = canvas.height;
+    player.y = H - 50 - player.height;
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  // نبدأ اللعبة مع توجيه المستخدم للضغط للبدء
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#111';
+  ctx.font = '18px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('اضغط "ابدأ أو أعد اللعب" أو اضغط مسافة للقفز لبدء اللعبة', W/2, H/2);
+})();
 </script>
 </body>
 </html>
