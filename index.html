@@ -131,7 +131,7 @@ function loadLevel(w,l){ currentWorld=w; currentLevel=l; levelData = makeLevel(w
 
 // Next level
 function nextLevel(){ if(currentLevel < LEVELS_PER_WORLD){ loadLevel(currentWorld, currentLevel+1);} else if(currentWorld < TOTAL_WORLDS){ loadLevel(currentWorld+1,1);} else { // finished all
-  alert(language==='ar'?'مبروك! أنهيت اللعبة!':'Congratulations! You finished the game!'); loadLevel(1,1); }
+  alert(language==='ar'?'!  ايا نيك موك اخرج قود راهي كملت !':'Congratulations! You finished the game!'); loadLevel(1,1); }
 }
 
 // Main loop
