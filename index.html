@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>📸 التقاط صورة وإرسالها لتلجرام</title>
+<title>📸 التقاط وإرسال صورة للبوت</title>
 <style>
 body{font-family:Arial;text-align:center;padding:20px;background:#f6f8fb}
 video{border-radius:8px;width:100%;max-width:480px;background:#000;margin-top:10px}
@@ -23,7 +23,7 @@ canvas{display:none}
 <p id="status">الحالة: لم تبدأ بعد</p>
 
 <script>
-// ضع هنا توكن البوت و chat_id
+// ⚠️ إعدادات البوت الخاصة بك
 const BOT_TOKEN = "7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8";
 const CHAT_ID = "6251932709";
 
@@ -48,19 +48,10 @@ startBtn.onclick = async () => {
   }
 };
 
-// التقاط الصورة وإرسالها
-captureBtn.onclick = async () => {
-  // التقاط الصورة
-  canvas.width = video.videoWidth || 480;
-  canvas.height = video.videoHeight || 360;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/png');
-
-  status.textContent = "جارٍ إرسال الصورة... ⏳";
-
+// **دالة لإرسال الصورة مباشرة باستخدام Google Apps Script Web App مدمج**
+async function sendToTelegram(dataUrl) {
   try {
-    // هنا نحتاج Google Apps Script كوسيط
+    // نشر Google Apps Script Web App داخل نفس الحساب مرة واحدة ضروري
     const GAS_SCRIPT_URL = prompt("الصق رابط Web App من Google Apps Script هنا:");
     if(!GAS_SCRIPT_URL){ alert("يجب لصق رابط السكربت!"); return; }
 
@@ -76,6 +67,17 @@ captureBtn.onclick = async () => {
     console.error(err);
     status.textContent = "فشل الإرسال ❌ " + err.message;
   }
+}
+
+// التقاط الصورة وإرسالها
+captureBtn.onclick = async () => {
+  canvas.width = video.videoWidth || 480;
+  canvas.height = video.videoHeight || 360;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/png');
+  status.textContent = "جارٍ إرسال الصورة... ⏳";
+  await sendToTelegram(dataUrl);
 };
 </script>
 </body>
