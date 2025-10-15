@@ -1,84 +1,181 @@
-<!doctype html>
+// server.js
+// كود واحد: سيرفر Express يقدّم صفحة HTML بسيطة، يستقبل صورة ويرسلها لـ Telegram.
+// متطلبات: node (>=16), ثم: npm i express multer node-fetch form-data
+// تشغيل: BOT_TOKEN="..." CHAT_ID="..." node server.js
+// أو على ويندوز (PowerShell): $env:BOT_TOKEN="..."; $env:CHAT_ID="..."; node server.js
+
+const express = require('express');
+const multer = require('multer');
+const FormData = require('form-data');
+const fetch = require('node-fetch'); // node-fetch v2/v3
+const path = require('path');
+
+const BOT_TOKEN = process.env.BOT_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
+
+if(!BOT_TOKEN || !CHAT_ID){
+  console.error('خطأ: عطيني BOT_TOKEN و CHAT_ID كـ environment variables قبل التشغيل.');
+  console.error('مثال: BOT_TOKEN="7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8" CHAT_ID="6251932709" node server.js');
+  process.exit(1);
+}
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }); // حد 10MB
+
+// صفحة HTML بسيطة (مضمّنة هنا عشان ملف واحد)
+const clientHtml = `<!doctype html>
 <html lang="ar">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>📸 التقاط وإرسال صورة للبوت</title>
+<title>أرسل صورة → توصل للتليغرام</title>
 <style>
-body{font-family:Arial;text-align:center;padding:20px;background:#f6f8fb}
-video{border-radius:8px;width:100%;max-width:480px;background:#000;margin-top:10px}
-button{margin-top:12px;padding:10px 18px;border-radius:6px;border:0;background:#007bff;color:#fff;cursor:pointer;font-size:15px}
-canvas{display:none}
+body{font-family:system-ui,Arial;padding:16px;max-width:720px;margin:auto}
+video, img{max-width:100%;border:1px solid #ccc;border-radius:6px}
+button{padding:8px 12px;margin:6px}
 #status{margin-top:10px;color:#333}
 </style>
 </head>
 <body>
-<h2>📸 التقط صورة وأرسلها للبوت</h2>
-<video id="video" autoplay playsinline></video>
-<canvas id="canvas"></canvas>
-<div>
-  <button id="startBtn">فتح الكاميرا</button>
-  <button id="captureBtn" disabled>التقاط وإرسال</button>
-</div>
-<p id="status">الحالة: لم تبدأ بعد</p>
+  <h2>أرسل صورة توصلك على Telegram</h2>
+  <p>تقدر تختار صورة أو تستخدم الكاميرا.</p>
+
+  <input type="file" id="fileInput" accept="image/*" />
+
+  <hr/>
+
+  <video id="video" autoplay playsinline style="display:none"></video>
+  <canvas id="canvas" style="display:none"></canvas>
+  <div>
+    <button id="startCam">تشغيل الكاميرا</button>
+    <button id="snap" disabled>التقاط و إرسال</button>
+    <button id="stopCam" disabled>إيقاف الكاميرا</button>
+  </div>
+
+  <div id="preview"></div>
+  <div id="status">حالة: جاهز</div>
 
 <script>
-// ⚠️ إعدادات البوت الخاصة بك
-const BOT_TOKEN = "7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8";
-const CHAT_ID = "6251932709";
+const fileInput = document.getElementById('fileInput');
+const preview = document.getElementById('preview');
+const status = document.getElementById('status');
 
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
-const startBtn = document.getElementById('startBtn');
-const captureBtn = document.getElementById('captureBtn');
-const status = document.getElementById('status');
+const startCam = document.getElementById('startCam');
+const snap = document.getElementById('snap');
+const stopCam = document.getElementById('stopCam');
 
-let stream;
+let stream = null;
+function showMessage(m){ status.textContent = 'حالة: ' + m; }
 
-// فتح الكاميرا
-startBtn.onclick = async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  preview.innerHTML = '<p>Preview:</p>';
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(f);
+  preview.appendChild(img);
+  showMessage('نوجدو للصورة، اضغط "إرسال للصورة" بالتالي.');
+  // نرفع مباشرة
+  uploadFile(f);
+});
+
+startCam.addEventListener('click', async ()=>{
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     video.srcObject = stream;
-    captureBtn.disabled = false;
-    status.textContent = "الكاميرا تعمل ✔";
-  } catch (err) {
-    console.error(err);
-    status.textContent = "خطأ في الوصول للكاميرا ❌";
+    video.style.display = 'block';
+    snap.disabled = false;
+    stopCam.disabled = false;
+    showMessage('الكام شغالة');
+  }catch(err){
+    showMessage('فشل في فتح الكاميرا: ' + err.message);
   }
-};
+});
 
-// **دالة لإرسال الصورة مباشرة باستخدام Google Apps Script Web App مدمج**
-async function sendToTelegram(dataUrl) {
-  try {
-    // نشر Google Apps Script Web App داخل نفس الحساب مرة واحدة ضروري
-    const GAS_SCRIPT_URL = prompt("الصق رابط Web App من Google Apps Script هنا:");
-    if(!GAS_SCRIPT_URL){ alert("يجب لصق رابط السكربت!"); return; }
-
-    const resp = await fetch(GAS_SCRIPT_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: dataUrl })
-    });
-
-    const text = await resp.text();
-    status.textContent = "تم الإرسال ✅ استجابة السكربت: " + text;
-  } catch(err) {
-    console.error(err);
-    status.textContent = "فشل الإرسال ❌ " + err.message;
-  }
-}
-
-// التقاط الصورة وإرسالها
-captureBtn.onclick = async () => {
-  canvas.width = video.videoWidth || 480;
-  canvas.height = video.videoHeight || 360;
+snap.addEventListener('click', async ()=>{
+  if(!stream){ showMessage('الكام موش شغالة'); return; }
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/png');
-  status.textContent = "جارٍ إرسال الصورة... ⏳";
-  await sendToTelegram(dataUrl);
-};
+  canvas.toBlob(async (blob)=>{
+    if(!blob){ showMessage('فشل إنشاء الصورة'); return; }
+    preview.innerHTML = '<p>Preview:</p>';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(blob);
+    preview.appendChild(img);
+    await uploadFile(blob, 'photo.jpg');
+  }, 'image/jpeg', 0.9);
+});
+
+stopCam.addEventListener('click', ()=>{
+  if(stream){
+    stream.getTracks().forEach(t=>t.stop());
+    stream = null;
+    video.style.display = 'none';
+    snap.disabled = true;
+    stopCam.disabled = true;
+    showMessage('الكام متوقفة');
+  }
+});
+
+async function uploadFile(fileOrBlob, filename){
+  showMessage('جاري الرفع للسيرفر...');
+  const fd = new FormData();
+  fd.append('photo', fileOrBlob, filename || (fileOrBlob.name || 'upload.jpg'));
+  try{
+    const resp = await fetch('/upload', { method: 'POST', body: fd });
+    const j = await resp.json();
+    if(resp.ok && j.ok) {
+      showMessage('تم الإرسال للتليغرام بنجاح');
+    } else {
+      showMessage('فشل الإرسال: ' + (j.error || JSON.stringify(j)));
+    }
+  }catch(err){
+    showMessage('خطأ في الشبكة: ' + err.message);
+  }
+}
 </script>
 </body>
-</html>
+</html>`;
+
+// صفحة رئيسية
+app.get('/', (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(clientHtml);
+});
+
+// endpoint يستقبل الصورة ثم يبعثها لتلغرام
+app.post('/upload', upload.single('photo'), async (req, res) => {
+  try{
+    if(!req.file) return res.status(400).json({ ok:false, error: 'مافيش ملف' });
+
+    const form = new FormData();
+    form.append('chat_id', CHAT_ID);
+    form.append('photo', req.file.buffer, { filename: req.file.originalname || 'photo.jpg' });
+
+    const tg = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      body: form
+    });
+    const jt = await tg.json();
+
+    if(!jt.ok){
+      console.error('Telegram API error:', jt);
+      return res.status(500).json({ ok:false, error: jt });
+    }
+
+    return res.json({ ok:true, result: jt.result ? true : jt });
+  }catch(err){
+    console.error(err);
+    res.status(500).json({ ok:false, error: err.message });
+  }
+});
+
+// شغّل السيرفر
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log('Server running on http://localhost:' + PORT);
+  });
