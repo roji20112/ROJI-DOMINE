@@ -1,44 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>تصوير الكاميرا</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>📸 التقاط صورة وإرسالها لتلجرام</title>
 <style>
-  body { text-align:center; font-family:Arial; margin-top:40px; }
-  video, canvas { display:block; margin:0 auto; }
-  button { margin-top:15px; padding:10px 20px; font-size:16px; }
+body{font-family:Arial;text-align:center;padding:20px;background:#f6f8fb}
+video{border-radius:8px;width:100%;max-width:480px;background:#000;margin-top:10px}
+button{margin-top:12px;padding:10px 18px;border-radius:6px;border:0;background:#007bff;color:#fff;cursor:pointer;font-size:15px}
+canvas{display:none}
+#status{margin-top:10px;color:#333}
 </style>
 </head>
 <body>
-  <h1>التقط صورة بالكاميرا</h1>
-  <video id="video" width="320" height="240" autoplay></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <button id="capture">📸 التقط وأرسل</button>
+<h2>📸 التقط صورة وأرسلها للبوت</h2>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas"></canvas>
+<div>
+  <button id="startBtn">فتح الكاميرا</button>
+  <button id="captureBtn" disabled>التقاط وإرسال</button>
+</div>
+<p id="status">الحالة: لم تبدأ بعد</p>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const button = document.getElementById('capture');
+<script>
+// ضع هنا توكن البوت و chat_id
+const BOT_TOKEN = "7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8";
+const CHAT_ID = "6251932709";
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream);
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const startBtn = document.getElementById('startBtn');
+const captureBtn = document.getElementById('captureBtn');
+const status = document.getElementById('status');
 
-    button.onclick = async () => {
-      const ctx = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      ctx.drawImage(video, 0, 0);
-      const dataUrl = canvas.toDataURL('image/png');
+let stream;
 
-      await fetch('/send_photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: dataUrl })
-      });
+// فتح الكاميرا
+startBtn.onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+    captureBtn.disabled = false;
+    status.textContent = "الكاميرا تعمل ✔";
+  } catch (err) {
+    console.error(err);
+    status.textContent = "خطأ في الوصول للكاميرا ❌";
+  }
+};
 
-      alert("📤 تم إرسال الصورة!");
-    };
-  </script>
+// التقاط الصورة وإرسالها
+captureBtn.onclick = async () => {
+  // التقاط الصورة
+  canvas.width = video.videoWidth || 480;
+  canvas.height = video.videoHeight || 360;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/png');
+
+  status.textContent = "جارٍ إرسال الصورة... ⏳";
+
+  try {
+    // هنا نحتاج Google Apps Script كوسيط
+    const GAS_SCRIPT_URL = prompt("الصق رابط Web App من Google Apps Script هنا:");
+    if(!GAS_SCRIPT_URL){ alert("يجب لصق رابط السكربت!"); return; }
+
+    const resp = await fetch(GAS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image: dataUrl })
+    });
+
+    const text = await resp.text();
+    status.textContent = "تم الإرسال ✅ استجابة السكربت: " + text;
+  } catch(err) {
+    console.error(err);
+    status.textContent = "فشل الإرسال ❌ " + err.message;
+  }
+};
+</script>
 </body>
 </html>
