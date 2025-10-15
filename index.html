@@ -18,4 +18,34 @@
       const input = document.getElementById('imageInput');
       const status = document.getElementById('status');
 
-      if (input.files.length ===
+      if (input.files.length === 0) {
+        status.textContent = "يرجى اختيار صورة أولاً!";
+        return;
+      }
+
+      const file = input.files[0];
+      const formData = new FormData();
+      formData.append("chat_id", CHAT_ID);
+      formData.append("photo", file);
+
+      status.textContent = "جارٍ الإرسال...";
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+        if (result.ok) {
+          status.textContent = "تم إرسال الصورة بنجاح!";
+        } else {
+          status.textContent = "فشل الإرسال: " + result.description;
+        }
+      } catch (error) {
+        status.textContent = "حدث خطأ: " + error;
+      }
+    }
+  </script>
+</body>
+</html>
