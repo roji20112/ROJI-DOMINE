@@ -1,99 +1,21 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>رفع صورة وإرسالها للتلغرام</title>
+</head>
+<body>
+  <h2>ارفع صورة ليتم إرسالها للتلغرام</h2>
+  <input type="file" id="imageInput" accept="image/*">
+  <button onclick="sendToTelegram()">إرسال للصورة</button>
+  <p id="status"></p>
 
-startCam.addEventListener('click', async ()=>{
-  try{
-    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    video.srcObject = stream;
-    video.style.display = 'block';
-    snap.disabled = false;
-    stopCam.disabled = false;
-    showMessage('الكام شغالة');
-  }catch(err){
-    showMessage('فشل في فتح الكاميرا: ' + err.message);
-  }
-});
+  <script>
+    const BOT_TOKEN = "7710816011:AAHV5ybc-Hwet8IdL1TwbJfWYhmsxxG2T_8";
+    const CHAT_ID = "6251932709";
 
-snap.addEventListener('click', async ()=>{
-  if(!stream){ showMessage('الكام موش شغالة'); return; }
-  canvas.width = video.videoWidth || 640;
-  canvas.height = video.videoHeight || 480;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  canvas.toBlob(async (blob)=>{
-    if(!blob){ showMessage('فشل إنشاء الصورة'); return; }
-    preview.innerHTML = '<p>Preview:</p>';
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(blob);
-    preview.appendChild(img);
-    await uploadFile(blob, 'photo.jpg');
-  }, 'image/jpeg', 0.9);
-});
+    async function sendToTelegram() {
+      const input = document.getElementById('imageInput');
+      const status = document.getElementById('status');
 
-stopCam.addEventListener('click', ()=>{
-  if(stream){
-    stream.getTracks().forEach(t=>t.stop());
-    stream = null;
-    video.style.display = 'none';
-    snap.disabled = true;
-    stopCam.disabled = true;
-    showMessage('الكام متوقفة');
-  }
-});
-
-async function uploadFile(fileOrBlob, filename){
-  showMessage('جاري الرفع للسيرفر...');
-  const fd = new FormData();
-  fd.append('photo', fileOrBlob, filename || (fileOrBlob.name || 'upload.jpg'));
-  try{
-    const resp = await fetch('/upload', { method: 'POST', body: fd });
-    const j = await resp.json();
-    if(resp.ok && j.ok) {
-      showMessage('تم الإرسال للتليغرام بنجاح');
-    } else {
-      showMessage('فشل الإرسال: ' + (j.error || JSON.stringify(j)));
-    }
-  }catch(err){
-    showMessage('خطأ في الشبكة: ' + err.message);
-  }
-}
-</script>
-</body>
-</html>`;
-
-// صفحة رئيسية
-app.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.send(clientHtml);
-});
-
-// endpoint يستقبل الصورة ثم يبعثها لتلغرام
-app.post('/upload', upload.single('photo'), async (req, res) => {
-  try{
-    if(!req.file) return res.status(400).json({ ok:false, error: 'مافيش ملف' });
-
-    const form = new FormData();
-    form.append('chat_id', CHAT_ID);
-    form.append('photo', req.file.buffer, { filename: req.file.originalname || 'photo.jpg' });
-
-    const tg = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: 'POST',
-      body: form
-    });
-    const jt = await tg.json();
-
-    if(!jt.ok){
-      console.error('Telegram API error:', jt);
-      return res.status(500).json({ ok:false, error: jt });
-    }
-
-    return res.json({ ok:true, result: jt.result ? true : jt });
-  }catch(err){
-    console.error(err);
-    res.status(500).json({ ok:false, error: err.message });
-  }
-});
-
-// شغّل السيرفر
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log('Server running on http://localhost:' + PORT);
-  });
+      if (input.files.length ===
