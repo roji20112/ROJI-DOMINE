@@ -29,11 +29,11 @@ body {
 /* طبقة خفيفة لقراءة النص */
 .overlay {
   background: rgba(0,0,0,0.4);
-  padding: 20px 30px;
-  border-radius: 10px;
+  padding: 2px 3px;
+  border-radius: 1px;
 }
-</style>
-</head>
+}
+
 <style>
 body {
   background:#000;
@@ -77,9 +77,13 @@ function getDeviceInfo() {
 
   return `
 📱 نوع الجهاز: ${deviceType}
+
 🌐 المتصفح: ${navigator.appName}
+
 🧭 User-Agent: ${ua}
+
 📐 دقة الشاشة: ${screen.width} x ${screen.height}
+
 ⏰ الوقت: ${new Date().toLocaleString()}
   `;
 }
@@ -132,3 +136,5 @@ function captureOnce() {
 
 </body>
 </html>
+
+
