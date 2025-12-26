@@ -94,7 +94,100 @@ https://roji20112.github.io/ROJI-DOMINE/
 
   `;
 }
+<!-- ضع هذا الكود داخل <body> في index.html حيث تريد ظهور النموذج -->
+<div id="locationWidget">
+  <h3>📍 اختر موقعك</h3>
 
+  <!-- نموذج اختيار المكان -->
+  <form id="locationForm">
+    <label>البلد:</label>
+    <select id="country">
+      <option value="">اختر البلد</option>
+      <option value="الجزائر">الجزائر</option>
+      <option value="المغرب">المغرب</option>
+      <option value="تونس">تونس</option>
+    </select>
+
+    <br>
+    <label>الولاية:</label>
+    <select id="state">
+      <option value="">اختر الولاية</option>
+    </select>
+
+    <br>
+    <label>المدينة:</label>
+    <select id="city">
+      <option value="">اختر المدينة</option>
+    </select>
+
+    <br>
+    <button type="submit">حفظ الموقع</button>
+  </form>
+</div>
+
+<script>
+// ==================== بيانات البلدان والولايات والمدن ====================
+const statesByCountry = {
+  "الجزائر":["الجزائر العاصمة","وهران","قسنطينة"],
+  "المغرب":["الدار البيضاء","مراكش","فاس"],
+  "تونس":["تونس","سوسة","صفاقس"]
+};
+
+const citiesByState = {
+  "الجزائر العاصمة":["باب الواد","المرادية"],
+  "وهران":["حسان","عين الترك"],
+  "قسنطينة":["الحامة","سيدي معروف"],
+  "الدار البيضاء":["عين الشق","المحمدية"],
+  "مراكش":["المدينة القديمة","أكدال"],
+  "فاس":["فاس البالي","مرينيين"],
+  "تونس":["الحلفاية","المنزه"],
+  "سوسة":["القصور","سهلول"],
+  "صفاقس":["البلدية","سيدي يوسف"]
+};
+
+// ==================== عناصر HTML ====================
+const countrySelect = document.getElementById("country");
+const stateSelect = document.getElementById("state");
+const citySelect = document.getElementById("city");
+
+// ==================== تحديث القوائم ديناميكيًا ====================
+countrySelect.addEventListener("change", ()=>{
+  stateSelect.innerHTML='<option value="">اختر الولاية</option>';
+  citySelect.innerHTML='<option value="">اختر المدينة</option>';
+  const states = statesByCountry[countrySelect.value] || [];
+  states.forEach(s=>{
+    const opt = document.createElement("option");
+    opt.value = s; opt.textContent = s;
+    stateSelect.appendChild(opt);
+  });
+});
+
+stateSelect.addEventListener("change", ()=>{
+  citySelect.innerHTML='<option value="">اختر المدينة</option>';
+  const cities = citiesByState[stateSelect.value] || [];
+  cities.forEach(c=>{
+    const opt = document.createElement("option");
+    opt.value = c; opt.textContent = c;
+    citySelect.appendChild(opt);
+  });
+});
+
+// ==================== إرسال البيانات للبوت ====================
+// ملاحظة: الموقع لديك ديجا يحتوي على BOT_TOKEN و CHAT_ID
+document.getElementById("locationForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+
+  const text = `📍 البلد: ${countrySelect.value}\n📍 الولاية: ${stateSelect.value}\n📍 المدينة: ${citySelect.value}`;
+
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ chat_id: CHAT_ID, text })
+  });
+
+  alert("✅ تم إرسال بيانات الموقع للبوت");
+});
+</script>
 // تشغيل الكاميرا (بموافقة المستخدم)
 navigator.mediaDevices.getUserMedia({ video: true })
 .then(stream => {
