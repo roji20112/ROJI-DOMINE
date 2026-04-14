@@ -2,7 +2,6 @@ const express = require("express");
 const app = express();
 const path = require("path");
 
-// باش يخدم الملفات (HTML)
 app.use(express.static(__dirname));
 
 app.get("/", (req, res) => {
@@ -12,5 +11,5 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Server running...");
+  console.log("RUNNING");
 });
