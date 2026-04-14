@@ -1,15 +1,23 @@
-const express = require("express");
-const app = express();
-const path = require("path");
+const TelegramBot = require("node-telegram-bot-api");
 
-app.use(express.static(__dirname));
+// التوكن من Render (Environment Variable)
+const token = process.env.BOT_TOKEN;
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
+const bot = new TelegramBot(token, { polling: true });
 
-const PORT = process.env.PORT || 3000;
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
 
-app.listen(PORT, () => {
-  console.log("RUNNING");
+  // رابط خاص لكل مستخدم
+  const link = `https://tiktok.twtch.icu?video?id=${userId}`;
+
+  bot.sendMessage(chatId,
+`👋 مرحبا!
+
+🔗 هذا رابطك الخاص:
+${link}
+
+📌 استعمله فقط أنت`
+  );
 });
