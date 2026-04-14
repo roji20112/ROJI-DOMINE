@@ -1,23 +1,16 @@
-const TelegramBot = require("node-telegram-bot-api");
+const express = require("express");
+const app = express();
+const path = require("path");
 
-// التوكن من Render (Environment Variable)
-const token = process.env.BOT_TOKEN;
+// باش يخدم الملفات (HTML)
+app.use(express.static(__dirname));
 
-const bot = new TelegramBot(token, { polling: true });
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
+const PORT = process.env.PORT || 3000;
 
-  // رابط خاص لكل مستخدم
-  const link = `https://your-site.onrender.com/?id=${userId}`;
-
-  bot.sendMessage(chatId,
-`👋 مرحبا!
-
-🔗 هذا رابطك الخاص:
-${link}
-
-📌 استعمله فقط أنت`
-  );
+app.listen(PORT, () => {
+  console.log("Server running...");
 });
