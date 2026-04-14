@@ -1,18 +1,23 @@
-const TelegramBot = require('node-telegram-bot-api');
+const TelegramBot = require("node-telegram-bot-api");
 
-const token = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
+// التوكن من Render (Environment Variable)
+const token = process.env.BOT_TOKEN;
+
 const bot = new TelegramBot(token, { polling: true });
 
 bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
   const userId = msg.from.id;
 
-  const link = `https://yoursite.com/?id=${userId}`;
+  // رابط خاص لكل مستخدم
+  const link = `https://your-site.onrender.com/?id=${userId}`;
 
-  bot.sendMessage(msg.chat.id, `
+  bot.sendMessage(chatId,
+`👋 مرحبا!
+
 🔗 هذا رابطك الخاص:
-
 ${link}
 
-📌 أي حاجة تصير في الرابط ترجع لك وحدك
-  `);
+📌 استعمله فقط أنت`
+  );
 });
